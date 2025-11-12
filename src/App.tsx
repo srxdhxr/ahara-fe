@@ -1,0 +1,99 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Layout from './components/Layout';
+import Auth from './pages/Auth';
+import FoodLogs from './pages/FoodLogs';
+import LogMeal from './pages/LogMeal';
+import Insights from './pages/Insights';
+import Profile from './pages/Profile';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+// Protected Route Component
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const hasToken = localStorage.getItem('access_token');
+  
+  if (!hasToken) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/auth" element={<Auth />} />
+          
+          {/* Protected Routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/food-logs" replace />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/food-logs"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <FoodLogs />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/log-meal"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <LogMeal />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/insights"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Insights />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Profile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
+
