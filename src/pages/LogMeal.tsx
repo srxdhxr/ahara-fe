@@ -6,6 +6,7 @@ import { api } from "../api/client";
 import MealTypeSelector from "../components/logmeal/MealTypeSelector";
 import NutritionDisplay from "../components/logmeal/NutritionDisplay";
 
+
 interface NutritionData {
   food_items: string[];
   total_calories: number;
