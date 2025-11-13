@@ -53,6 +53,7 @@ export default function LogMeal() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const startTimeRef = useRef<Date | null>(null);
+  const recordingTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Fetch user info
@@ -68,6 +69,13 @@ export default function LogMeal() {
         setHasUserDetails(false);
       }
     });
+
+    // Cleanup: Clear timeout on unmount
+    return () => {
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
+    };
   }, []);
 
   const startRecording = async () => {
@@ -96,6 +104,12 @@ export default function LogMeal() {
       setIsRecording(true);
       setTranscript("");
       setNutritionData(null);
+      
+      // Auto-stop after 120 seconds (2 minutes)
+      recordingTimeoutRef.current = setTimeout(() => {
+        console.log('Recording auto-stopped after 120 seconds');
+        stopRecording();
+      }, 120000);
     } catch (error) {
       console.error('Error accessing microphone:', error);
       alert('Could not access microphone');
@@ -106,6 +120,12 @@ export default function LogMeal() {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      
+      // Clear the auto-stop timeout
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+        recordingTimeoutRef.current = null;
+      }
     }
   };
 
