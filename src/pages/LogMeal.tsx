@@ -61,7 +61,7 @@ export default function LogMeal() {
     }).catch(() => {});
 
     // Check if user has details
-    api.getUserDetails().then(response => {
+    api.getUserDetails().then(() => {
       setHasUserDetails(true);
     }).catch((error) => {
       if (error.response?.status === 404) {
