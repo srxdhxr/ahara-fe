@@ -72,6 +72,13 @@ export const api = {
 
   processMeal: (sessionId: number) =>
     apiClient.post(`/process_meal/${sessionId}`),
+
+  // OTP
+  sendOTP: (email: string) =>
+    apiClient.post('/send_otp', { email }),
+
+  verifyOTP: (email: string, otp: string) =>
+    apiClient.post('/verify_otp', { email, otp }),
 };
 
 export default apiClient;

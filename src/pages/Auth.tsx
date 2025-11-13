@@ -172,6 +172,16 @@ export default function Auth() {
               >
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </button>
+
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => navigate('/verify-otp')}
+                  className="text-sm text-[#8B7355] hover:text-[#6B5B95] transition-colors"
+                >
+                  Sign in with OTP
+                </button>
+              </div>
             </form>
           )}
 

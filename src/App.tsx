@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Layout from './components/Layout';
 import Auth from './pages/Auth';
+import OTPVerification from './pages/OTPVerification';
 import FoodLogs from './pages/FoodLogs';
 import LogMeal from './pages/LogMeal';
 import Insights from './pages/Insights';
@@ -35,6 +36,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/auth" element={<Auth />} />
+          <Route path="/verify-otp" element={<OTPVerification />} />
           
           {/* Protected Routes */}
           <Route
