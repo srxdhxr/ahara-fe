@@ -211,7 +211,9 @@ export default function LogMeal() {
         <h1 className="text-xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
           Hey {userName},
         </h1>
-        <p className="text-[#8B7355] text-xs">Ready for the next meal memo?</p>
+        <p className="text-[#8B7355] text-xs">
+          Describe what you ate with details and quantities - the more specific, the better!
+        </p>
       </div>
 
       {/* Meal Type Selector */}

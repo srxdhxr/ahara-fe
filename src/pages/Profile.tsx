@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Scale, Ruler } from "lucide-react";
+import { User, Scale, Ruler, Edit2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../api/client";
 import UserStatsForm from "../components/profile/UserStatsForm";
@@ -66,10 +66,9 @@ export default function Profile() {
     },
     onSuccess: (data) => {
       setUserDetails(data);
-      alert('Calorie goals updated!');
     },
     onError: () => {
-      alert('Failed to update calorie goals');
+      console.error('Failed to update calorie goals');
     }
   });
 
@@ -101,56 +100,69 @@ export default function Profile() {
           <div className="w-20 h-20 bg-gradient-to-br from-[#E8DEFF] to-[#D4E7FF] rounded-[20px] flex items-center justify-center clay-shadow flex-shrink-0">
             <User className="w-10 h-10 text-[#6B5B95]" strokeWidth={2} />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
-              Profile
+              {userName || 'User'}
             </h1>
-            <p className="text-[#8B7355] text-sm font-semibold">{userName || 'User'}</p>
+            {hasStats && (
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-[#8B7355] text-sm">
+                  {userDetails.age} years • {userDetails.sex === 'male' ? 'M' : 'F'}
+                </p>
+              </div>
+            )}
           </div>
+          <LogoutButton />
         </div>
       </div>
 
       {/* Health Stats */}
       {hasStats && !showForm ? (
         <>
-          <BMIDisplay user={userDetails} />
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-5 clay-shadow">
-              <div className="w-12 h-12 bg-[#FFE8D6] rounded-[14px] flex items-center justify-center mb-3 clay-inset">
-                <Scale className="w-6 h-6 text-[#6B5B95]" />
-              </div>
-              <p className="text-2xl font-bold text-[#6B5B95]">
-                {userDetails.weight_kg}
-                <span className="text-sm font-normal text-[#8B7355] ml-1">kg</span>
-              </p>
-              <p className="text-xs text-[#8B7355] mt-1">Weight</p>
+          {/* Weight & Height with Edit */}
+          <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-5 clay-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-[#6B5B95]">Body Metrics</h3>
+              <button
+                onClick={() => setShowForm(true)}
+                className="w-8 h-8 bg-[#E8DEFF] rounded-[10px] flex items-center justify-center clay-hover"
+              >
+                <Edit2 className="w-4 h-4 text-[#6B5B95]" />
+              </button>
             </div>
             
-            <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-5 clay-shadow">
-              <div className="w-12 h-12 bg-[#D4E7FF] rounded-[14px] flex items-center justify-center mb-3 clay-inset">
-                <Ruler className="w-6 h-6 text-[#6B5B95]" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/50 rounded-[14px] p-4 clay-inset">
+                <div className="w-10 h-10 bg-[#FFE8D6] rounded-[12px] flex items-center justify-center mb-2 clay-inset">
+                  <Scale className="w-5 h-5 text-[#6B5B95]" />
+                </div>
+                <p className="text-xl font-bold text-[#6B5B95]">
+                  {userDetails.weight_kg}
+                  <span className="text-sm font-normal text-[#8B7355] ml-1">kg</span>
+                </p>
+                <p className="text-xs text-[#8B7355] mt-1">Weight</p>
               </div>
-              <p className="text-2xl font-bold text-[#6B5B95]">
-                {userDetails.height_cm}
-                <span className="text-sm font-normal text-[#8B7355] ml-1">cm</span>
-              </p>
-              <p className="text-xs text-[#8B7355] mt-1">Height</p>
+              
+              <div className="bg-white/50 rounded-[14px] p-4 clay-inset">
+                <div className="w-10 h-10 bg-[#D4E7FF] rounded-[12px] flex items-center justify-center mb-2 clay-inset">
+                  <Ruler className="w-5 h-5 text-[#6B5B95]" />
+                </div>
+                <p className="text-xl font-bold text-[#6B5B95]">
+                  {userDetails.height_cm}
+                  <span className="text-sm font-normal text-[#8B7355] ml-1">cm</span>
+                </p>
+                <p className="text-xs text-[#8B7355] mt-1">Height</p>
+              </div>
             </div>
           </div>
+
+          <BMIDisplay user={userDetails} />
 
           <CalorieGoals 
             user={userDetails}
             onSave={handleSaveCalorieLimits}
             isLoading={updateCaloriesMutation.isPending}
           />
-
-          <button
-            onClick={() => setShowForm(true)}
-            className="w-full h-14 bg-gradient-to-r from-[#E8DEFF] to-[#D4E7FF] text-[#6B5B95] rounded-[16px] clay-shadow clay-hover font-semibold"
-          >
-            Update Health Stats
-          </button>
         </>
       ) : showForm ? (
         <UserStatsForm 
@@ -177,8 +189,6 @@ export default function Profile() {
           </button>
         </div>
       )}
-
-      <LogoutButton />
     </div>
   );
 }
