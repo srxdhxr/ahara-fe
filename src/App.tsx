@@ -8,6 +8,7 @@ import FoodLogs from './pages/FoodLogs';
 import LogMeal from './pages/LogMeal';
 import Insights from './pages/Insights';
 import Profile from './pages/Profile';
+import Chat from './pages/Chat';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +45,17 @@ function App() {
             element={
               <ProtectedRoute>
                 <Navigate to="/food-logs" replace />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Chat />
+                </Layout>
               </ProtectedRoute>
             }
           />

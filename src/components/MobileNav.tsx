@@ -1,11 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "../utils";
-import { ScrollText, Plus, TrendingUp, User } from "lucide-react";
+import { MessageCircle, ScrollText, Plus, TrendingUp, User } from "lucide-react";
 
 export default function MobileNav() {
   const location = useLocation();
 
   const navItems = [
+    { name: "Chat", path: "Chat", icon: MessageCircle },
     { name: "Food Logs", path: "FoodLogs", icon: ScrollText },
     { name: "Log Meal", path: "LogMeal", icon: Plus },
     { name: "Insights", path: "Insights", icon: TrendingUp },

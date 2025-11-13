@@ -76,9 +76,16 @@ export const api = {
   // OTP
   sendOTP: (email: string) =>
     apiClient.post('/send_otp', { email }),
-
+  
   verifyOTP: (email: string, otp: string) =>
     apiClient.post('/verify_otp', { email, otp }),
+
+  // Chat
+  sendChatMessage: (message: string) =>
+    apiClient.post('/chat', { message }),
+  
+  getChatHistory: () =>
+    apiClient.get('/chat/history'),
 };
 
 export default apiClient;
