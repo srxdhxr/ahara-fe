@@ -48,6 +48,7 @@ export default function LogMeal() {
   const [nutritionData, setNutritionData] = useState<NutritionData | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [hasUserDetails, setHasUserDetails] = useState<boolean | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -58,6 +59,15 @@ export default function LogMeal() {
     api.getMe().then(response => {
       setUserName(response.data.name);
     }).catch(() => {});
+
+    // Check if user has details
+    api.getUserDetails().then(response => {
+      setHasUserDetails(true);
+    }).catch((error) => {
+      if (error.response?.status === 404) {
+        setHasUserDetails(false);
+      }
+    });
   }, []);
 
   const startRecording = async () => {
@@ -191,8 +201,27 @@ export default function LogMeal() {
 
       {/* Main Content Area - Fixed Space */}
       <div className="flex-1 flex flex-col gap-4">
-        {/* Record Button - Only show when no transcript */}
-        {!transcript && !isTranscribing && (
+        {/* Check User Details */}
+        {hasUserDetails === false && !transcript && !isTranscribing && (
+          <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-6 clay-shadow text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#FFE8D6] to-[#FFE0E8] rounded-[18px] flex items-center justify-center mx-auto mb-4 clay-inset">
+              <Sparkles className="w-8 h-8 text-[#6B5B95]" />
+            </div>
+            <h3 className="text-lg font-semibold text-[#6B5B95] mb-2">Complete Your Profile</h3>
+            <p className="text-sm text-[#8B7355] mb-4 leading-relaxed">
+              Before logging meals, please update your profile with your height, weight, and other details. This helps us provide accurate nutrition tracking!
+            </p>
+            <button
+              onClick={() => navigate('/profile')}
+              className="w-full h-12 bg-gradient-to-r from-[#E8DEFF] to-[#D4E7FF] text-[#6B5B95] rounded-[16px] clay-shadow font-semibold hover:scale-105 transition-all"
+            >
+              Go to Profile
+            </button>
+          </div>
+        )}
+
+        {/* Record Button - Only show when user has details and no transcript */}
+        {hasUserDetails === true && !transcript && !isTranscribing && (
           <div className="flex justify-center">
             <button
               onClick={toggleRecording}
