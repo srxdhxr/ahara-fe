@@ -45,6 +45,11 @@ export default function Auth() {
     e.preventDefault();
     setError('');
 
+    if (signUpData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
     if (signUpData.password !== signUpData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -219,9 +224,11 @@ export default function Auth() {
                     onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                     className="w-full pl-12 pr-4 py-3 bg-white/70 border-2 border-[#E8DEFF] rounded-[14px] text-[#6B5B95] placeholder-[#B4A093] focus:outline-none focus:border-[#6B5B95] focus:bg-white transition-all"
                     placeholder="••••••••"
+                    minLength={8}
                     required
                   />
                 </div>
+                <p className="text-xs text-[#8B7355] mt-1 ml-1">Minimum 8 characters</p>
               </div>
 
               <div>
