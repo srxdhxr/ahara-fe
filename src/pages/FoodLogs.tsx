@@ -26,7 +26,8 @@ interface FoodLogSession {
 }
 
 export default function FoodLogs() {
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+  const [selectedDate, setSelectedDate] = useState<string>(today);
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['foodLogs', selectedDate],
@@ -38,7 +39,7 @@ export default function FoodLogs() {
 
   const totalCalories = logs.reduce((sum, log) => sum + (log.total_calories || 0), 0);
 
-  const clearFilter = () => setSelectedDate('');
+  const clearFilter = () => setSelectedDate(today);
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
@@ -59,10 +60,10 @@ export default function FoodLogs() {
             </div>
             <div>
               <p className="text-[10px] text-[#8B7355]">
-                {selectedDate ? 'Selected' : 'All Time'}
+                {selectedDate === today ? 'Today' : 'Selected'}
               </p>
               <p className="text-sm font-semibold text-[#6B5B95]">
-                {selectedDate ? format(new Date(selectedDate), 'MMM d, yyyy') : 'All meals'}
+                {format(new Date(selectedDate), 'MMM d, yyyy')}
               </p>
             </div>
           </div>
@@ -80,12 +81,12 @@ export default function FoodLogs() {
             onChange={(e) => setSelectedDate(e.target.value)}
             className="flex-1 px-3 py-1.5 text-sm bg-white/70 border-2 border-[#E8DEFF] rounded-[10px] text-[#6B5B95] focus:outline-none focus:border-[#6B5B95]"
           />
-          {selectedDate && (
+          {selectedDate !== today && (
             <button
               onClick={clearFilter}
               className="px-3 py-1.5 text-xs bg-[#FFE8D6] text-[#6B5B95] rounded-[10px] font-semibold hover:bg-[#FFE0E8] transition"
             >
-              Clear
+              Today
             </button>
           )}
         </div>
