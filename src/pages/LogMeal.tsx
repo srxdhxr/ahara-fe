@@ -139,6 +139,14 @@ export default function LogMeal() {
   return (
     <div className="space-y-6 min-h-[calc(100vh-200px)] flex flex-col max-w-md mx-auto w-full px-4">
 
+      {/* Header */}
+      <div className="space-y-1">
+        <h1 className="text-xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
+          Hey {userName},
+        </h1>
+        <p className="text-[#8B7355] text-xs">Ready for the next meal memo?</p>
+      </div>
+
       {/* Meal Type Selector */}
       <div className={`transition-all duration-500 ${(transcript || nutritionData) ? 'scale-95' : ''}`}>
         <MealTypeSelector selected={mealType} onSelect={setMealType} />
