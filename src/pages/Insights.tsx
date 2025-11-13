@@ -21,19 +21,19 @@ export default function Insights() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
+      <div className="space-y-1">
+        <h1 className="text-xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
           Insights
         </h1>
-        <p className="text-[#8B7355] text-sm">Your nutrition overview</p>
+        <p className="text-[#8B7355] text-xs">Your nutrition overview</p>
       </div>
 
       {/* Overall Stats */}
       {statsLoading ? (
-        <div className="bg-white/50 rounded-[20px] p-8 clay-shadow animate-pulse">
-          <div className="h-48 bg-gray-200 rounded-[16px]"></div>
+        <div className="bg-white/50 rounded-[16px] p-4 clay-shadow animate-pulse">
+          <div className="h-32 bg-gray-200 rounded-[12px]"></div>
         </div>
       ) : weeklyStats ? (
         <OverallStats
@@ -47,8 +47,8 @@ export default function Insights() {
 
       {/* Calorie Chart */}
       {graphLoading ? (
-        <div className="bg-white/50 rounded-[20px] p-8 clay-shadow animate-pulse">
-          <div className="h-96 bg-gray-200 rounded-[16px]"></div>
+        <div className="bg-white/50 rounded-[16px] p-4 clay-shadow animate-pulse">
+          <div className="h-64 bg-gray-200 rounded-[12px]"></div>
         </div>
       ) : graphData ? (
         <CalorieChart 

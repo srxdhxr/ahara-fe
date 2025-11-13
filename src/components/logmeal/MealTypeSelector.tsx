@@ -14,7 +14,7 @@ const mealTypes = [
 
 export default function MealTypeSelector({ selected, onSelect }: Props) {
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 gap-3 w-full">
       {mealTypes.map((meal) => {
         const Icon = meal.icon;
         const isSelected = selected === meal.value;
@@ -29,7 +29,7 @@ export default function MealTypeSelector({ selected, onSelect }: Props) {
                 ? `bg-gradient-to-br ${meal.color} clay-shadow` 
                 : 'bg-white/50 clay-inset'
               }
-              clay-hover
+              clay-hover min-h-[100px]
             `}
           >
             <div className={`

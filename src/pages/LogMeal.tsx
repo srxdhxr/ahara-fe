@@ -76,6 +76,14 @@ export default function LogMeal() {
     }
   };
 
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   const handleTranscribe = async (audioBlob: Blob) => {
     setIsTranscribing(true);
     
@@ -129,58 +137,40 @@ export default function LogMeal() {
   };
 
   return (
-    <div className="space-y-6 min-h-[calc(100vh-200px)] flex flex-col">
+    <div className="space-y-6 min-h-[calc(100vh-200px)] flex flex-col max-w-md mx-auto w-full px-4">
 
-      {/* Control Area */}
-      <div className={`flex items-center justify-center gap-4 transition-all duration-500 ${(transcript || nutritionData) ? 'scale-90' : ''}`}>
+      {/* Meal Type Selector */}
+      <div className={`transition-all duration-500 ${(transcript || nutritionData) ? 'scale-95' : ''}`}>
         <MealTypeSelector selected={mealType} onSelect={setMealType} />
+      </div>
 
+      {/* Record Button */}
+      <div className="flex justify-center">
         <button
-          onMouseDown={startRecording}
-          onMouseUp={stopRecording}
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
+          onClick={toggleRecording}
           disabled={isTranscribing || processMutation.isPending}
-          className={`w-20 h-20 rounded-full transition-all duration-300 flex items-center justify-center ${
+          className={`w-56 h-16 rounded-[20px] transition-all duration-300 flex items-center justify-center gap-3 ${
             isRecording 
               ? 'bg-gradient-to-br from-[#FFE0E8] to-[#FFE8D6] clay-shadow animate-pulse' 
-              : 'bg-gradient-to-br from-[#E8DEFF] to-[#D4E7FF] clay-shadow hover:scale-110'
+              : 'bg-gradient-to-br from-[#E8DEFF] to-[#D4E7FF] clay-shadow hover:scale-105'
           } disabled:opacity-50`}
         >
           {isRecording ? (
-            <MicOff className="w-10 h-10 text-[#6B5B95]" strokeWidth={2} />
+            <>
+              <MicOff className="w-6 h-6 text-[#6B5B95]" strokeWidth={2} />
+              <span className="text-base font-semibold text-[#6B5B95]">Stop Recording</span>
+            </>
           ) : (
-            <Mic className="w-10 h-10 text-[#6B5B95]" strokeWidth={2} />
+            <>
+              <Mic className="w-6 h-6 text-[#6B5B95]" strokeWidth={2} />
+              <span className="text-base font-semibold text-[#6B5B95]">Start Recording</span>
+            </>
           )}
         </button>
       </div>
 
       {/* Center Content */}
       <div className="flex-1 flex items-center justify-center">
-        {/* Initial Helper Text */}
-        {!isTranscribing && !transcript && !nutritionData && (
-          <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-8 clay-shadow text-center w-full space-y-4">
-            <h2 className="text-2xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
-              Hey {userName}! Ready for a new Meal Memo?
-            </h2>
-            <div className="w-16 h-16 bg-gradient-to-br from-[#E8DEFF] to-[#D4E7FF] rounded-[18px] flex items-center justify-center mx-auto clay-inset">
-              <Sparkles className="w-8 h-8 text-[#6B5B95]" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold text-[#6B5B95] text-base">How it works</h3>
-              <p className="text-[#8B7355] text-sm leading-relaxed">
-                Select your meal type, hold the mic button, and tell me what you ate. 
-                I'll transcribe it, analyze the nutrition, and save it to your food log!
-              </p>
-            </div>
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <div className="w-2 h-2 rounded-full bg-[#6B5B95]"></div>
-              <div className="w-2 h-2 rounded-full bg-[#8B7355]"></div>
-              <div className="w-2 h-2 rounded-full bg-[#6B5B95]"></div>
-            </div>
-          </div>
-        )}
-
         {/* Transcribing */}
         {isTranscribing && (
           <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-8 clay-shadow text-center w-full">
