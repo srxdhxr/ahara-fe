@@ -30,34 +30,36 @@ export default function NutritionDisplay({ data }: Props) {
     : [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Food Items */}
-      <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-6 clay-shadow space-y-3">
-        <h3 className="font-semibold text-[#6B5B95] mb-4">✅ Food Items</h3>
+      <div className="bg-white/50 backdrop-blur-sm rounded-[16px] p-4 clay-shadow space-y-2">
+        <h3 className="text-sm font-semibold text-[#6B5B95] mb-2">✅ Food Items</h3>
         {foodItemsList.map((item, idx) => (
-          <div key={idx} className="flex items-center justify-between p-3 bg-white/50 rounded-[16px] clay-inset">
-            <span className="text-sm font-medium text-[#6B5B95]">{item}</span>
+          <div key={idx} className="flex items-center justify-between p-2 bg-white/50 rounded-[12px] clay-inset">
+            <span className="text-xs font-medium text-[#6B5B95]">{item}</span>
           </div>
         ))}
       </div>
 
       {/* Nutrition Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         {nutrients.map((nutrient) => {
           const Icon = nutrient.icon;
           return (
             <div
               key={nutrient.label}
-              className="bg-white/50 backdrop-blur-sm rounded-[20px] p-5 clay-shadow"
+              className="bg-white/50 backdrop-blur-sm rounded-[12px] p-2.5 clay-shadow"
             >
-              <div className={`w-12 h-12 bg-gradient-to-br ${nutrient.color} rounded-[14px] flex items-center justify-center mb-3 clay-inset`}>
-                <Icon className="w-6 h-6 text-[#6B5B95]" strokeWidth={2} />
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <div className={`w-6 h-6 bg-gradient-to-br ${nutrient.color} rounded-[8px] flex items-center justify-center clay-inset flex-shrink-0`}>
+                  <Icon className="w-3 h-3 text-[#6B5B95]" strokeWidth={2} />
+                </div>
+                <p className="text-[10px] text-[#8B7355] font-medium">{nutrient.label}</p>
               </div>
-              <p className="text-2xl font-bold text-[#6B5B95]">
+              <p className="text-base font-bold text-[#6B5B95] ml-0.5">
                 {nutrient.value}
-                <span className="text-sm font-normal text-[#8B7355] ml-1">{nutrient.unit}</span>
+                <span className="text-[10px] font-normal text-[#8B7355] ml-1">{nutrient.unit}</span>
               </p>
-              <p className="text-xs text-[#8B7355] mt-1">{nutrient.label}</p>
             </div>
           );
         })}
