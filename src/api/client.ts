@@ -65,6 +65,9 @@ export const api = {
       params: date ? { date, timezone_offset: timezoneOffset } : {} 
     });
   },
+  
+  deleteFoodLog: (sessionId: number) =>
+    apiClient.delete(`/food_logs/${sessionId}`),
 
   // Insights
   getWeeklyStats: () =>
