@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, Utensils } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 import ReactMarkdown from 'react-markdown';
 
@@ -16,6 +17,17 @@ function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const answerContainerRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLDivElement>(null);
+
+  // Check if user has any food logs
+  const { data: foodLogs = [] } = useQuery({
+    queryKey: ['foodLogs', 'check'],
+    queryFn: async () => {
+      const response = await api.getFoodLogs();
+      return response.data as Array<any>;
+    },
+  });
+
+  const hasFoodLogs = foodLogs.length > 0;
 
   // Save question and answer to sessionStorage
   useEffect(() => {
@@ -105,6 +117,22 @@ function Chat() {
         </h1>
         <p className="text-[#8B7355] text-sm">Get insights about your nutrition, recipes, progress & meal advice</p>
       </div>
+
+      {/* No Food Logs Message - Only show when no logs exist and no response */}
+      {!hasResponse && !hasFoodLogs && (
+        <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-4 sm:p-5 clay-shadow mb-4 mx-auto w-full max-w-2xl">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#FFE8D6] to-[#FFE0E8] rounded-[14px] flex items-center justify-center flex-shrink-0 clay-inset">
+              <Utensils className="w-5 h-5 text-[#6B5B95]" strokeWidth={2} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm sm:text-base text-[#6B5B95] leading-relaxed" style={{ fontFamily: 'Georgia, serif' }}>
+                Start logging your meals so I can learn about your food habits and provide personalized nutrition insights! 🍽️
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search Box - Centered when no response, moves up when response appears */}
       <div 
