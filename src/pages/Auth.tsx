@@ -97,9 +97,9 @@ export default function Auth() {
     setError('');
     setIsLoading(true);
 
-    const clientId = '472671594503-q8754fegeunc527mlrfi0o4binuhudbl.apps.googleusercontent.com'
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     
-    if (!clientId) {
+    if (!clientId || clientId === 'your-google-client-id-here.apps.googleusercontent.com') {
       setError('Google Client ID not configured. Please add VITE_GOOGLE_CLIENT_ID to your .env file.');
       setIsLoading(false);
       return;
@@ -109,12 +109,13 @@ export default function Auth() {
       // Wait for Google script to load
       const checkGoogle = () => {
         return new Promise<void>((resolve) => {
-          // @ts-ignore
-          if (window.google) {
-            resolve();
-          } else {
-            setTimeout(() => checkGoogle().then(resolve), 100);
-          }
+          const interval = setInterval(() => {
+            // @ts-ignore
+            if (window.google?.accounts?.id) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 100);
         });
       };
 
@@ -129,6 +130,7 @@ export default function Auth() {
             await api.googleAuth(response.credential);
             navigate('/food-logs');
           } catch (err: any) {
+            console.error('Backend auth error:', err);
             setError(err.response?.data?.detail || 'Google sign-in failed. Please try again.');
           } finally {
             setIsLoading(false);
@@ -136,10 +138,34 @@ export default function Auth() {
         },
       });
 
-      // Trigger sign-in
-      // @ts-ignore
-      window.google.accounts.id.prompt();
+      // Use renderButton instead of prompt
+      const buttonElement = document.getElementById('google-signin-button');
+      if (buttonElement) {
+        // @ts-ignore
+        window.google.accounts.id.renderButton(
+          buttonElement,
+          { 
+            theme: 'outline', 
+            size: 'large',
+            width: '100%'
+          }
+        );
+        
+        // Trigger the button programmatically
+        setTimeout(() => {
+          const clickableButton = buttonElement.querySelector('div[role="button"]') as HTMLElement;
+          if (clickableButton) {
+            clickableButton.click();
+          }
+        }, 100);
+      } else {
+        // Fallback: use prompt if button element not found
+        // @ts-ignore
+        window.google.accounts.id.prompt();
+      }
+      
     } catch (err: any) {
+      console.error('Google sign-in initialization error:', err);
       setError('Google sign-in failed. Please try again.');
       setIsLoading(false);
     }
@@ -250,11 +276,12 @@ export default function Auth() {
                   </div>
                 </div>
                 
+                <div id="google-signin-button" className="w-full"></div>
                 <button
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-3 h-12 bg-white border-2 border-[#E8DEFF] rounded-[14px] text-[#6B5B95] font-semibold hover:bg-white/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 h-12 bg-white border-2 border-[#E8DEFF] rounded-[14px] text-[#6B5B95] font-semibold hover:bg-white/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
