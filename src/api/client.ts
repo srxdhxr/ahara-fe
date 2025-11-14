@@ -89,6 +89,13 @@ export const api = {
     const timezoneOffset = new Date().getTimezoneOffset();
     return apiClient.post('/chat', { message }, { params: { timezone_offset: timezoneOffset } });
   },
+
+  // Google Auth
+  googleAuth: async (idToken: string) => {
+    const response = await apiClient.post('/auth/google', { id_token: idToken });
+    localStorage.setItem('access_token', response.data.access_token);
+    return response;
+  },
 };
 
 export default apiClient;
