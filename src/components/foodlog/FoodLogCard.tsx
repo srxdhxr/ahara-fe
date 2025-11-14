@@ -66,7 +66,7 @@ export default function FoodLogCard({ log }: Props) {
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-sm font-semibold text-[#6B5B95]">{formatMealType(log.meal_type)}</h3>
             <span className="text-[10px] text-[#8B7355]">
-              {format(new Date(log.created_at), 'h:mm a')}
+              {format(new Date(log.created_at.includes('Z') ? log.created_at : log.created_at + 'Z'), 'h:mm a')}
             </span>
           </div>
           

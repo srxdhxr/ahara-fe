@@ -26,8 +26,14 @@ interface FoodLogSession {
 }
 
 export default function FoodLogs() {
-  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-  const [selectedDate, setSelectedDate] = useState<string>(today);
+  // Get today's date in LOCAL timezone (not UTC)
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const todayLocal = `${year}-${month}-${day}`;
+  
+  const [selectedDate, setSelectedDate] = useState<string>(todayLocal);
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['foodLogs', selectedDate],
@@ -39,7 +45,7 @@ export default function FoodLogs() {
 
   const totalCalories = logs.reduce((sum, log) => sum + (log.total_calories || 0), 0);
 
-  const clearFilter = () => setSelectedDate(today);
+  const clearFilter = () => setSelectedDate(todayLocal);
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
@@ -60,10 +66,13 @@ export default function FoodLogs() {
             </div>
             <div>
               <p className="text-[10px] text-[#8B7355]">
-                {selectedDate === today ? 'Today' : 'Selected'}
+                {selectedDate === todayLocal ? 'Today' : 'Selected'}
               </p>
               <p className="text-sm font-semibold text-[#6B5B95]">
-                {format(new Date(selectedDate), 'MMM d, yyyy')}
+                {(() => {
+                  const [year, month, day] = selectedDate.split('-').map(Number);
+                  return format(new Date(year, month - 1, day), 'MMM d, yyyy');
+                })()}
               </p>
             </div>
           </div>
@@ -81,7 +90,7 @@ export default function FoodLogs() {
             onChange={(e) => setSelectedDate(e.target.value)}
             className="flex-1 px-3 py-1.5 text-sm bg-white/70 border-2 border-[#E8DEFF] rounded-[10px] text-[#6B5B95] focus:outline-none focus:border-[#6B5B95]"
           />
-          {selectedDate !== today && (
+          {selectedDate !== todayLocal && (
             <button
               onClick={clearFilter}
               className="px-3 py-1.5 text-xs bg-[#FFE8D6] text-[#6B5B95] rounded-[10px] font-semibold hover:bg-[#FFE0E8] transition"

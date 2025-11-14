@@ -54,8 +54,12 @@ export const api = {
     apiClient.put('/user_details', data),
 
   // Food Logs
-  getFoodLogs: (date?: string) =>
-    apiClient.get('/food_logs', { params: date ? { date } : {} }),
+  getFoodLogs: (date?: string) => {
+    const timezoneOffset = new Date().getTimezoneOffset();
+    return apiClient.get('/food_logs', { 
+      params: date ? { date, timezone_offset: timezoneOffset } : {} 
+    });
+  },
 
   // Insights
   getWeeklyStats: () =>
@@ -81,11 +85,10 @@ export const api = {
     apiClient.post('/verify_otp', { email, otp }),
 
   // Chat
-  sendChatMessage: (message: string) =>
-    apiClient.post('/chat', { message }),
-  
-  getChatHistory: () =>
-    apiClient.get('/chat/history'),
+  sendChatMessage: (message: string) => {
+    const timezoneOffset = new Date().getTimezoneOffset();
+    return apiClient.post('/chat', { message }, { params: { timezone_offset: timezoneOffset } });
+  },
 };
 
 export default apiClient;
