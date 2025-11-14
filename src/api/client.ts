@@ -88,9 +88,13 @@ export const api = {
     apiClient.post('/verify_otp', { email, otp }),
 
   // Chat
-  sendChatMessage: (message: string) => {
+  sendChatMessage: (message: string, nutritionContext?: any) => {
     const timezoneOffset = new Date().getTimezoneOffset();
-    return apiClient.post('/chat', { message }, { params: { timezone_offset: timezoneOffset } });
+    const payload: any = { message };
+    if (nutritionContext) {
+      payload.nutrition_context = nutritionContext;
+    }
+    return apiClient.post('/chat', payload, { params: { timezone_offset: timezoneOffset } });
   },
 
   // Google Auth

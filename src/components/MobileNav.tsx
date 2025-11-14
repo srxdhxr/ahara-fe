@@ -14,7 +14,7 @@ export default function MobileNav() {
   ];
 
   return (
-    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white/40 backdrop-blur-xl rounded-[24px] clay-shadow border border-white/60 px-2 py-3 z-50">
+    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white/40 backdrop-blur-xl rounded-[20px] clay-shadow border border-white/60 px-2 py-2 z-50">
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const isActive = location.pathname === createPageUrl(item.path);
@@ -24,11 +24,11 @@ export default function MobileNav() {
             <Link
               key={item.name}
               to={createPageUrl(item.path)}
-              className="relative flex items-center justify-center w-14 h-14 transition-all duration-300"
+              className="relative flex items-center justify-center w-12 h-12 transition-all duration-300"
             >
               <div
                 className={`
-                  flex items-center justify-center rounded-[18px] w-14 h-14 transition-all duration-300
+                  flex items-center justify-center rounded-[14px] w-12 h-12 transition-all duration-300
                   ${isActive 
                     ? 'bg-gradient-to-br from-[#E8DEFF] to-[#D4E7FF] clay-shadow scale-105' 
                     : 'bg-transparent hover:bg-white/30'
@@ -36,7 +36,7 @@ export default function MobileNav() {
                 `}
               >
                 <Icon 
-                  className={`w-6 h-6 transition-colors duration-300 ${
+                  className={`w-5 h-5 transition-colors duration-300 ${
                     isActive ? 'text-[#6B5B95]' : 'text-[#8B7355]'
                   }`}
                   strokeWidth={isActive ? 2.5 : 2}

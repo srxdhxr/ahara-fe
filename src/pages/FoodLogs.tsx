@@ -43,8 +43,6 @@ export default function FoodLogs() {
     },
   });
 
-  const totalCalories = logs.reduce((sum, log) => sum + (log.total_calories || 0), 0);
-
   const clearFilter = () => setSelectedDate(todayLocal);
 
   return (
@@ -52,34 +50,27 @@ export default function FoodLogs() {
       {/* Header */}
       <div className="space-y-2 mb-4">
         <h1 className="text-xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
-          Food Logs
+          Today's Food Log
         </h1>
         <p className="text-[#8B7355] text-xs">Track your daily nutrition</p>
       </div>
 
       {/* Date Selector - Sticky */}
       <div className="bg-white/50 backdrop-blur-sm rounded-[16px] p-3 clay-shadow mb-4 flex-shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#D4E7FF] rounded-[12px] flex items-center justify-center clay-inset">
-              <Calendar className="w-4 h-4 text-[#6B5B95]" />
-            </div>
-            <div>
-              <p className="text-[10px] text-[#8B7355]">
-                {selectedDate === todayLocal ? 'Today' : 'Selected'}
-              </p>
-              <p className="text-sm font-semibold text-[#6B5B95]">
-                {(() => {
-                  const [year, month, day] = selectedDate.split('-').map(Number);
-                  return format(new Date(year, month - 1, day), 'MMM d, yyyy');
-                })()}
-              </p>
-            </div>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 bg-[#D4E7FF] rounded-[12px] flex items-center justify-center clay-inset">
+            <Calendar className="w-4 h-4 text-[#6B5B95]" />
           </div>
-          <div className="text-right">
-            <p className="text-[10px] text-[#8B7355]">Total</p>
-            <p className="text-xl font-bold text-[#6B5B95]">{Math.round(totalCalories)}</p>
-            <p className="text-[10px] text-[#8B7355]">cal</p>
+          <div>
+            <p className="text-[10px] text-[#8B7355]">
+              {selectedDate === todayLocal ? 'Today' : 'Selected'}
+            </p>
+            <p className="text-sm font-semibold text-[#6B5B95]">
+              {(() => {
+                const [year, month, day] = selectedDate.split('-').map(Number);
+                return format(new Date(year, month - 1, day), 'MMM d, yyyy');
+              })()}
+            </p>
           </div>
         </div>
         

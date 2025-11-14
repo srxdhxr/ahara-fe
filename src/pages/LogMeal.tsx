@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Mic, MicOff, Save, X, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
@@ -48,6 +48,127 @@ export default function LogMeal() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [hasUserDetails, setHasUserDetails] = useState<boolean | null>(null);
+  
+  // Get today's date for fetching food logs
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const todayLocal = `${year}-${month}-${day}`;
+  
+  // Get yesterday's date
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayYear = yesterday.getFullYear();
+  const yesterdayMonth = String(yesterday.getMonth() + 1).padStart(2, '0');
+  const yesterdayDay = String(yesterday.getDate()).padStart(2, '0');
+  const yesterdayLocal = `${yesterdayYear}-${yesterdayMonth}-${yesterdayDay}`;
+  
+  // Fetch user details for calorie limits
+  const { data: userDetails } = useQuery({
+    queryKey: ['userDetails'],
+    queryFn: async () => {
+      const response = await api.getUserDetails();
+      return response.data as { min_cal: number | null; max_cal: number | null };
+    },
+    enabled: hasUserDetails === true,
+  });
+  
+  // Fetch today's food logs
+  const { data: todayLogs = [] } = useQuery({
+    queryKey: ['foodLogs', todayLocal],
+    queryFn: async () => {
+      const response = await api.getFoodLogs(todayLocal);
+      return response.data as Array<{
+        total_calories: number;
+        total_protein: number;
+        total_carbs: number;
+        total_fat: number;
+      }>;
+    },
+    enabled: hasUserDetails === true,
+  });
+  
+  // Fetch yesterday's food logs
+  const { data: yesterdayLogs = [] } = useQuery({
+    queryKey: ['foodLogs', yesterdayLocal],
+    queryFn: async () => {
+      const response = await api.getFoodLogs(yesterdayLocal);
+      return response.data as Array<{
+        total_calories: number;
+      }>;
+    },
+    enabled: hasUserDetails === true,
+  });
+  
+  // Calculate today's totals
+  const todayTotalCalories = todayLogs.reduce((sum, log) => sum + (log.total_calories || 0), 0);
+  const todayTotalProtein = todayLogs.reduce((sum, log) => sum + (log.total_protein || 0), 0);
+  const todayTotalCarbs = todayLogs.reduce((sum, log) => sum + (log.total_carbs || 0), 0);
+  const todayTotalFat = todayLogs.reduce((sum, log) => sum + (log.total_fat || 0), 0);
+  
+  // Calculate yesterday's total calories
+  const yesterdayTotalCalories = yesterdayLogs.reduce((sum, log) => sum + (log.total_calories || 0), 0);
+  
+  // Calculate today's calorie goal
+  const calculateTodayCalGoal = () => {
+    if (!userDetails?.min_cal || !userDetails?.max_cal) {
+      return null;
+    }
+    
+    const minCal = userDetails.min_cal;
+    const maxCal = userDetails.max_cal;
+    
+    // If today's consumed calories > upper limit, adjust goal
+    if (todayTotalCalories > maxCal) {
+      // Goal = min(1.2 * (consumed_calories - upper_limit), 0.75 * lower_limit)
+      const penalty = 1.2 * (todayTotalCalories - maxCal);
+      const minGoal = 0.75 * minCal;
+      return Math.round(Math.min(penalty, minGoal));
+    }
+    
+    // Otherwise, use yesterday's logic
+    if (yesterdayTotalCalories > maxCal) {
+      // If yesterday was more than upper limit: 1.5 * (yesterdayTotalCal - upperLimitCal)
+      return Math.round(1.5 * (yesterdayTotalCalories - maxCal));
+    } else if (yesterdayTotalCalories < minCal) {
+      // If yesterday was less than lower limit: goal is UpperLimitCal
+      return maxCal;
+    } else {
+      // Otherwise, use upper limit as goal
+      return maxCal;
+    }
+  };
+  
+  const todayCalGoal = calculateTodayCalGoal();
+  
+  // Determine status: green/mellow if within goal, red if above
+  const getCalorieStatus = () => {
+    if (todayCalGoal === null) return null;
+    if (todayTotalCalories > todayCalGoal) {
+      return 'red'; // Above goal
+    } else {
+      return 'green'; // Within goal
+    }
+  };
+  
+  const calorieStatus = getCalorieStatus();
+  
+  // Store in sessionStorage for chat context
+  useEffect(() => {
+    if (hasUserDetails === true && todayCalGoal !== null) {
+      const contextData = {
+        todayTotalCalories: Math.round(todayTotalCalories),
+        todayTotalProtein: Math.round(todayTotalProtein),
+        todayTotalCarbs: Math.round(todayTotalCarbs),
+        todayTotalFat: Math.round(todayTotalFat),
+        todayCalGoal: todayCalGoal,
+        calorieStatus: calorieStatus,
+        timestamp: new Date().toISOString()
+      };
+      sessionStorage.setItem('nutritionContext', JSON.stringify(contextData));
+    }
+  }, [todayTotalCalories, todayTotalProtein, todayTotalCarbs, todayTotalFat, todayCalGoal, calorieStatus, hasUserDetails]);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -217,58 +338,136 @@ export default function LogMeal() {
         <h1 className="text-xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
           Hey {userName},
         </h1>
-        <p className="text-[#8B7355] text-xs">
-          Describe what you ate with details and quantities - the more specific, the better!
-        </p>
+        {hasUserDetails === true && (
+          <p className="text-[#8B7355] text-xs">
+            Describe what you ate with details and quantities - the more specific, the better!
+          </p>
+        )}
       </div>
 
+      {/* App Explanation - Only show when user doesn't have details */}
+      {hasUserDetails === false && (
+        <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-6 clay-shadow text-center space-y-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#FFE8D6] to-[#FFE0E8] rounded-[18px] flex items-center justify-center mx-auto clay-inset">
+            <Sparkles className="w-8 h-8 text-[#6B5B95]" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
+              Welcome to Ahara
+            </h2>
+            <p className="text-sm text-[#8B7355] leading-relaxed">
+              Your personal AI nutritionist that helps you track meals, monitor your daily nutrition, and get personalized dietary advice. Simply speak or type what you eat, and we'll handle the rest!
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/profile')}
+            className="w-full h-12 bg-gradient-to-r from-[#E8DEFF] to-[#D4E7FF] text-[#6B5B95] rounded-[16px] clay-shadow font-semibold hover:scale-105 transition-all"
+          >
+            Create Your Profile
+          </button>
+        </div>
+      )}
+
+      {/* Calory Tracker Container */}
+      {hasUserDetails === true && todayCalGoal !== null && (
+        <div className="bg-white/50 backdrop-blur-sm rounded-[16px] px-4 py-1.5 clay-shadow -mx-4">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-xs font-semibold text-[#6B5B95]">Tracker</h2>
+            {calorieStatus && (
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  calorieStatus === 'green' 
+                    ? 'bg-green-500 animate-pulse' 
+                    : 'bg-red-500 animate-pulse'
+                }`}></div>
+                <span className={`text-[9px] font-medium ${
+                  calorieStatus === 'green' 
+                    ? 'text-green-600' 
+                    : 'text-red-600'
+                }`}>
+                  {calorieStatus === 'green' ? 'On Track' : 'Over Consumed!'}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[9px] text-[#8B7355] mb-0.5">Current</p>
+              <p className="text-sm font-bold text-[#6B5B95]">{Math.round(todayTotalCalories)}</p>
+            </div>
+            <div className="text-center">
+              <div className="w-px h-6 bg-[#E8DEFF] mx-auto"></div>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] text-[#8B7355] mb-0.5">Goal</p>
+              <p className="text-sm font-bold text-[#6B5B95]">{todayCalGoal}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Today's Total Container */}
+      {hasUserDetails === true && (
+        <div className="bg-white/50 backdrop-blur-sm rounded-[16px] px-4 py-1.5 clay-shadow -mx-4 -mt-1">
+          <p className="text-xs text-[#8B7355] mb-1 text-center">Today's Total</p>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 text-center">
+              <p className="text-sm font-semibold text-[#6B5B95]">{Math.round(todayTotalCalories)}</p>
+              <p className="text-[10px] text-[#8B7355]">cal</p>
+            </div>
+            <div className="w-px h-6 bg-[#E8DEFF]"></div>
+            <div className="flex-1 text-center">
+              <p className="text-sm font-semibold text-[#6B5B95]">{Math.round(todayTotalProtein)}</p>
+              <p className="text-[10px] text-[#8B7355]">protein</p>
+            </div>
+            <div className="w-px h-6 bg-[#E8DEFF]"></div>
+            <div className="flex-1 text-center">
+              <p className="text-sm font-semibold text-[#6B5B95]">{Math.round(todayTotalCarbs)}</p>
+              <p className="text-[10px] text-[#8B7355]">carbs</p>
+            </div>
+            <div className="w-px h-6 bg-[#E8DEFF]"></div>
+            <div className="flex-1 text-center">
+              <p className="text-sm font-semibold text-[#6B5B95]">{Math.round(todayTotalFat)}</p>
+              <p className="text-[10px] text-[#8B7355]">fat</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Meal Type Selector */}
-      <div className={`transition-all duration-500 ${(transcript || nutritionData) ? 'scale-95' : ''}`}>
+      <div className={`${hasUserDetails ? '-mt-2' : ''} transition-all duration-500 ${(transcript || nutritionData) ? 'scale-95' : ''}`}>
         <MealTypeSelector selected={mealType} onSelect={setMealType} />
       </div>
 
       {/* Main Content Area - Fixed Space */}
       <div className="flex-1 flex flex-col gap-4">
-        {/* Check User Details */}
-        {hasUserDetails === false && !transcript && !isTranscribing && (
-          <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-6 clay-shadow text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#FFE8D6] to-[#FFE0E8] rounded-[18px] flex items-center justify-center mx-auto mb-4 clay-inset">
-              <Sparkles className="w-8 h-8 text-[#6B5B95]" />
-            </div>
-            <h3 className="text-lg font-semibold text-[#6B5B95] mb-2">Complete Your Profile</h3>
-            <p className="text-sm text-[#8B7355] mb-4 leading-relaxed">
-              Before logging meals, please update your profile with your height, weight, and other details. This helps us provide accurate nutrition tracking!
-            </p>
-            <button
-              onClick={() => navigate('/profile')}
-              className="w-full h-12 bg-gradient-to-r from-[#E8DEFF] to-[#D4E7FF] text-[#6B5B95] rounded-[16px] clay-shadow font-semibold hover:scale-105 transition-all"
-            >
-              Go to Profile
-            </button>
-          </div>
-        )}
-
-        {/* Record Button - Only show when user has details and no transcript */}
-        {hasUserDetails === true && !transcript && !isTranscribing && (
-          <div className="flex justify-center">
+        {/* Record Button - Show for all users, but disabled if no details */}
+        {!transcript && !isTranscribing && (
+          <div className="flex justify-center -mt-2">
             <button
               onClick={toggleRecording}
-              disabled={isTranscribing || processMutation.isPending}
-              className={`w-56 h-16 rounded-[20px] transition-all duration-300 flex items-center justify-center gap-3 ${
+              disabled={!hasUserDetails || isTranscribing || processMutation.isPending}
+              className={`relative w-48 h-12 rounded-[16px] transition-all duration-300 flex items-center justify-center gap-2 ${
                 isRecording 
                   ? 'bg-gradient-to-br from-[#FFE0E8] to-[#FFE8D6] clay-shadow animate-pulse' 
-                  : 'bg-gradient-to-br from-[#E8DEFF] to-[#D4E7FF] clay-shadow hover:scale-105'
-              } disabled:opacity-50`}
+                  : 'bg-gradient-to-br from-[#E8DEFF] to-[#D4E7FF] clay-shadow'
+              } ${hasUserDetails && !isRecording ? 'hover:scale-105' : ''} disabled:opacity-50 disabled:cursor-not-allowed ${
+                isRecording 
+                  ? 'ring-2 ring-red-400 ring-opacity-75 shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
+                  : hasUserDetails 
+                    ? 'ring-2 ring-[#6B5B95] ring-opacity-50 shadow-[0_0_15px_rgba(107,91,149,0.4)]'
+                    : ''
+              }`}
             >
               {isRecording ? (
                 <>
-                  <MicOff className="w-6 h-6 text-[#6B5B95]" strokeWidth={2} />
-                  <span className="text-base font-semibold text-[#6B5B95]">Stop Recording</span>
+                  <MicOff className="w-5 h-5 text-[#6B5B95]" strokeWidth={2} />
+                  <span className="text-sm font-semibold text-[#6B5B95]">Stop Recording</span>
                 </>
               ) : (
                 <>
-                  <Mic className="w-6 h-6 text-[#6B5B95]" strokeWidth={2} />
-                  <span className="text-base font-semibold text-[#6B5B95]">Start Recording</span>
+                  <Mic className="w-5 h-5 text-[#6B5B95]" strokeWidth={2} />
+                  <span className="text-sm font-semibold text-[#6B5B95]">Start Recording</span>
                 </>
               )}
             </button>

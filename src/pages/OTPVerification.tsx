@@ -1,16 +1,32 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { Mail, Lock, ArrowLeft } from 'lucide-react';
 
 export default function OTPVerification() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<'email' | 'otp'>('email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  // Check if email and type are provided in URL params (from sign-up flow)
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    const typeParam = searchParams.get('type');
+    
+    if (emailParam) {
+      setEmail(emailParam);
+      setIsSignUp(typeParam === 'signup');
+      // If email is provided, skip to OTP step
+      setStep('otp');
+      setMessage('OTP has been sent to your email. Please check your inbox.');
+    }
+  }, [searchParams]);
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +55,8 @@ export default function OTPVerification() {
       
       if (response.data.success && response.data.access_token) {
         localStorage.setItem('access_token', response.data.access_token);
-        navigate('/food-logs');
+        // Navigate based on whether it's sign-up or sign-in
+        navigate('/log-meal');
       } else {
         setError(response.data.message || 'Verification failed');
       }

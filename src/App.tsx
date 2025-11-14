@@ -44,7 +44,7 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <Navigate to="/food-logs" replace />
+                <Navigate to="/log-meal" replace />
               </ProtectedRoute>
             }
           />
