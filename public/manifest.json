@@ -1,27 +1,29 @@
 {
-  "name": "Ahara",
+  "name": "Ahara - Nutrition Tracker",
   "short_name": "Ahara",
   "description": "Your Personal Nutrition Assistant",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#6B5B95",
   "orientation": "portrait",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/favicon.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/favicon.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/apple-touch-icon.png",
+      "src": "/favicon.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
