@@ -74,8 +74,8 @@ export const api = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 
-  processMeal: (sessionId: number) =>
-    apiClient.post(`/process_meal/${sessionId}`),
+  processMeal: (data: { transcript: string; meal_type: string; start_time: string; end_time: string }) =>
+    apiClient.post('/process_meal', data),
 
   // OTP
   sendOTP: (email: string) =>

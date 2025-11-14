@@ -44,14 +44,12 @@ export default function LogMeal() {
   const [mealType, setMealType] = useState("breakfast");
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [sessionId, setSessionId] = useState<number | null>(null);
   const [nutritionData, setNutritionData] = useState<NutritionData | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [hasUserDetails, setHasUserDetails] = useState<boolean | null>(null);
   
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
   const startTimeRef = useRef<Date | null>(null);
   const recordingTimeoutRef = useRef<number | null>(null);
 
@@ -78,50 +76,73 @@ export default function LogMeal() {
     };
   }, []);
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      startTimeRef.current = new Date();
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        stream.getTracks().forEach(track => track.stop());
-        
-        // Automatically transcribe
-        await handleTranscribe(audioBlob);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setTranscript("");
-      setNutritionData(null);
-      
-      // Auto-stop after 120 seconds (2 minutes)
-      recordingTimeoutRef.current = setTimeout(() => {
-        console.log('Recording auto-stopped after 120 seconds');
-        stopRecording();
-      }, 120000);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      alert('Could not access microphone');
+  const startRecording = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert('Speech recognition not supported in this browser');
+      return;
     }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    let finalTranscript = '';
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      
+      setTranscript(finalTranscript + interimTranscript);
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error !== 'no-speech') {
+        setIsRecording(false);
+        setIsTranscribing(false);
+        alert('Speech recognition error: ' + event.error);
+      }
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      setIsTranscribing(false);
+      
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+        recordingTimeoutRef.current = null;
+      }
+    };
+
+    recognitionRef.current = recognition;
+    startTimeRef.current = new Date();
+    setIsRecording(true);
+    setIsTranscribing(true);
+    setTranscript("");
+    setNutritionData(null);
+    recognition.start();
+
+    recordingTimeoutRef.current = setTimeout(() => {
+      stopRecording();
+    }, 120000);
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
       setIsRecording(false);
+      setIsTranscribing(false);
       
-      // Clear the auto-stop timeout
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
         recordingTimeoutRef.current = null;
@@ -137,32 +158,17 @@ export default function LogMeal() {
     }
   };
 
-  const handleTranscribe = async (audioBlob: Blob) => {
-    setIsTranscribing(true);
-    
-    const formData = new FormData();
-    formData.append('audio_file', audioBlob, 'recording.webm');
-    formData.append('meal_type', mealType);
-    formData.append('start_time', startTimeRef.current?.toISOString() || new Date().toISOString());
-    formData.append('end_time', new Date().toISOString());
-
-    try {
-      const response = await api.transcribeAudio(formData);
-      setSessionId(response.data.session_id);
-      setTranscript(response.data.transcript);
-    } catch (error) {
-      console.error('Error transcribing:', error);
-      alert('Transcription failed');
-    } finally {
-      setIsTranscribing(false);
-    }
-  };
 
   const processMutation = useMutation({
     mutationFn: async () => {
-      if (!sessionId) throw new Error('No session ID');
-      setShowModal(true); // Show modal with loading
-      const response = await api.processMeal(sessionId);
+      if (!transcript) throw new Error('No transcript');
+      setShowModal(true);
+      const response = await api.processMeal({
+        transcript,
+        meal_type: mealType,
+        start_time: startTimeRef.current?.toISOString() || new Date().toISOString(),
+        end_time: new Date().toISOString(),
+      });
       return response.data;
     },
     onSuccess: (data) => {
@@ -183,14 +189,12 @@ export default function LogMeal() {
 
   const handleDiscard = () => {
     setTranscript("");
-    setSessionId(null);
     setNutritionData(null);
     setShowModal(false);
   };
 
   const handleReRecord = () => {
     setTranscript("");
-    setSessionId(null);
     setNutritionData(null);
   };
 
