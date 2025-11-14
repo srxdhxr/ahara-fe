@@ -12,16 +12,13 @@ export default function OTPVerification() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
 
   // Check if email and type are provided in URL params (from sign-up flow)
   useEffect(() => {
     const emailParam = searchParams.get('email');
-    const typeParam = searchParams.get('type');
     
     if (emailParam) {
       setEmail(emailParam);
-      setIsSignUp(typeParam === 'signup');
       // If email is provided, skip to OTP step
       setStep('otp');
       setMessage('OTP has been sent to your email. Please check your inbox.');
