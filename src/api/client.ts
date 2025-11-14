@@ -6,6 +6,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 seconds timeout
 });
 
 // Add auth token to requests
@@ -20,6 +21,27 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Global error handler - handle 401/403 responses
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 401 (Unauthorized) or 403 (Forbidden) - token expired or invalid
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      // Clear invalid token
+      localStorage.removeItem('access_token');
+      
+      // Only redirect if not already on auth page
+      if (window.location.pathname !== '/auth' && window.location.pathname !== '/verify-otp') {
+        // Clear any session data
+        sessionStorage.clear();
+        // Redirect to login
+        window.location.href = '/auth';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const api = {
   // Auth

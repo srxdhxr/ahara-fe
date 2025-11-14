@@ -132,7 +132,6 @@ export default function Auth() {
             await api.googleAuth(response.credential);
             navigate('/food-logs');
           } catch (err: any) {
-            console.error('Backend auth error:', err);
             setError(err.response?.data?.detail || 'Google sign-in failed. Please try again.');
           } finally {
             setIsLoading(false);
@@ -155,7 +154,6 @@ export default function Auth() {
       }
       
     } catch (err: any) {
-      console.error('Google sign-in initialization error:', err);
       setError('Google sign-in failed. Please try again.');
     }
   };

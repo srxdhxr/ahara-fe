@@ -23,7 +23,7 @@ export default function Profile() {
       const response = await api.getMe();
       setUserName(response.data.name);
     } catch (err) {
-      console.error('Failed to load user info');
+      // Failed to load user info
     }
   };
 
@@ -32,7 +32,7 @@ export default function Profile() {
       const response = await api.getUserDetails();
       setUserDetails(response.data);
     } catch (err) {
-      console.error('No user details found');
+      // No user details found
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export default function Profile() {
       setUserDetails(data);
     },
     onError: () => {
-      console.error('Failed to update calorie goals');
+      // Failed to update calorie goals
     }
   });
 

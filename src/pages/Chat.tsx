@@ -77,13 +77,12 @@ function Chat() {
           }
         }
       } catch (e) {
-        console.error('Error reading nutrition context:', e);
+        // Error reading nutrition context
       }
       
       const response = await api.sendChatMessage(queryToUse, nutritionContext);
       setAnswer(response.data.message);
     } catch (error) {
-      console.error('Failed to get answer:', error);
       setAnswer("I'm sorry, I encountered an error. Please try again.");
     } finally {
       setIsLoading(false);

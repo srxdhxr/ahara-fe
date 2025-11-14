@@ -233,7 +233,6 @@ export default function LogMeal() {
           const response = await api.transcribeAudio(formData);
           setTranscript(response.data.transcript);
         } catch (error) {
-          console.error('Transcription error:', error);
           alert('Failed to transcribe audio. Please try again.');
         } finally {
           setIsRecording(false);
@@ -252,7 +251,6 @@ export default function LogMeal() {
         stopRecording();
       }, 120000);
     } catch (error) {
-      console.error('Error starting recording:', error);
       alert('Failed to access microphone. Please check permissions.');
     }
   };
