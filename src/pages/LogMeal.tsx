@@ -72,6 +72,8 @@ export default function LogMeal() {
       return response.data as { min_cal: number | null; max_cal: number | null };
     },
     enabled: hasUserDetails === true,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
   
   // Fetch today's food logs
@@ -111,6 +113,8 @@ export default function LogMeal() {
   const yesterdayTotalCalories = yesterdayLogs.reduce((sum, log) => sum + (log.total_calories || 0), 0);
   
   // Calculate today's calorie goal
+  // Logic: If you ate more yesterday (above upper limit), eat less today (lower limit)
+  // Otherwise, goal is lower limit
   const calculateTodayCalGoal = () => {
     if (!userDetails?.min_cal || !userDetails?.max_cal) {
       return null;
@@ -119,25 +123,14 @@ export default function LogMeal() {
     const minCal = userDetails.min_cal;
     const maxCal = userDetails.max_cal;
     
-    // If today's consumed calories > upper limit, adjust goal
-    if (todayTotalCalories > maxCal) {
-      // Goal = min(1.2 * (consumed_calories - upper_limit), 0.75 * lower_limit)
-      const penalty = 1.2 * (todayTotalCalories - maxCal);
-      const minGoal = 0.75 * minCal;
-      return Math.round(Math.min(penalty, minGoal));
+    // If yesterday's calories exist and are above upper limit, goal is lower limit
+    if (yesterdayLogs.length > 0 && yesterdayTotalCalories > maxCal) {
+      // Ate more yesterday, so goal is to eat less today (lower limit)
+      return 0.75*minCal;
     }
     
-    // Otherwise, use yesterday's logic
-    if (yesterdayTotalCalories > maxCal) {
-      // If yesterday was more than upper limit: 1.5 * (yesterdayTotalCal - upperLimitCal)
-      return Math.round(1.5 * (yesterdayTotalCalories - maxCal));
-    } else if (yesterdayTotalCalories < minCal) {
-      // If yesterday was less than lower limit: goal is UpperLimitCal
-      return maxCal;
-    } else {
-      // Otherwise, use upper limit as goal
-      return maxCal;
-    }
+    // Otherwise, goal is lower limit
+    return minCal;
   };
   
   const todayCalGoal = calculateTodayCalGoal();
@@ -181,9 +174,11 @@ export default function LogMeal() {
       setUserName(response.data.name);
     }).catch(() => {});
 
-    // Check if user has details
+    // Check if user has details and fetch them
     api.getUserDetails().then(() => {
       setHasUserDetails(true);
+      // Invalidate and refetch user details to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['userDetails'] });
     }).catch((error) => {
       if (error.response?.status === 404) {
         setHasUserDetails(false);
@@ -199,7 +194,7 @@ export default function LogMeal() {
         mediaRecorderRef.current.stop();
       }
     };
-  }, []);
+  }, [queryClient]);
 
   const startRecording = async () => {
     try {
