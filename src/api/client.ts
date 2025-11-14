@@ -69,11 +69,6 @@ export const api = {
     apiClient.get('/calorie_graph', { params: { days } }),
 
   // Meal Tracking
-  transcribeAudio: (formData: FormData) =>
-    apiClient.post('/transcribe_audio', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-
   processMeal: (data: { transcript: string; meal_type: string; start_time: string; end_time: string }) =>
     apiClient.post('/process_meal', data),
 
