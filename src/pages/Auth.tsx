@@ -175,10 +175,17 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-5xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
-            Ahara
-          </h1>
+        <div className="text-center space-y-3">
+          <div className="flex items-center justify-center gap-3">
+            <img 
+              src="/favicon.png" 
+              alt="Ahara" 
+              className="h-16 w-16 sm:h-20 sm:w-20"
+            />
+            <h1 className="text-5xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
+              Ahara
+            </h1>
+          </div>
           <p className="text-[#8B7355] text-sm">Your nutrition companion</p>
         </div>
 
