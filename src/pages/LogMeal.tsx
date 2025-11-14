@@ -446,9 +446,9 @@ export default function LogMeal() {
                   : 'bg-gradient-to-br from-[#E8DEFF] to-[#D4E7FF] clay-shadow'
               } ${hasUserDetails && !isRecording ? 'hover:scale-105' : ''} disabled:opacity-50 disabled:cursor-not-allowed ${
                 isRecording 
-                  ? 'ring-2 ring-red-400 ring-opacity-75 shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
+                  ? 'ring-2 ring-red-400 ring-opacity-75 shadow-[0_0_8px_rgba(239,68,68,0.3)]' 
                   : hasUserDetails 
-                    ? 'ring-2 ring-[#6B5B95] ring-opacity-50 shadow-[0_0_15px_rgba(107,91,149,0.4)]'
+                    ? 'ring-2 ring-[#6B5B95] ring-opacity-50 shadow-[0_0_8px_rgba(107,91,149,0.25)]'
                     : ''
               }`}
             >
