@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 const apiClient = axios.create({
@@ -12,6 +13,10 @@ apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  // Remove Content-Type for FormData so axios can set it with boundary
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
   }
   return config;
 });
@@ -69,6 +74,9 @@ export const api = {
     apiClient.get('/calorie_graph', { params: { days } }),
 
   // Meal Tracking
+  transcribeAudio: (formData: FormData) =>
+    apiClient.post('/transcribe_audio', formData),
+
   processMeal: (data: { transcript: string; meal_type: string; start_time: string; end_time: string }) =>
     apiClient.post('/process_meal', data),
 
@@ -94,4 +102,3 @@ export const api = {
 };
 
 export default apiClient;
-

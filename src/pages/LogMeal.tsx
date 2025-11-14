@@ -49,9 +49,10 @@ export default function LogMeal() {
   const [showModal, setShowModal] = useState(false);
   const [hasUserDetails, setHasUserDetails] = useState<boolean | null>(null);
   
-  const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const startTimeRef = useRef<Date | null>(null);
-  const recordingTimeoutRef = useRef<number | null>(null);
+  const recordingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Fetch user info
@@ -73,75 +74,76 @@ export default function LogMeal() {
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
       }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
     };
   }, []);
 
-  const startRecording = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      alert('Speech recognition not supported in this browser');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    let finalTranscript = '';
-
-    recognition.onresult = (event: any) => {
-      let interimTranscript = '';
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript + ' ';
-        } else {
-          interimTranscript += transcript;
+      audioChunksRef.current = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
         }
-      }
-      
-      setTranscript(finalTranscript + interimTranscript);
-    };
+      };
 
-    recognition.onerror = (event: any) => {
-      if (event.error !== 'no-speech') {
-        setIsRecording(false);
-        setIsTranscribing(false);
-        alert('Speech recognition error: ' + event.error);
-      }
-    };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+        
+        if (audioChunksRef.current.length === 0) {
+          setIsRecording(false);
+          setIsTranscribing(false);
+          return;
+        }
 
-    recognition.onend = () => {
-      setIsRecording(false);
-      setIsTranscribing(false);
-      
-      if (recordingTimeoutRef.current) {
-        clearTimeout(recordingTimeoutRef.current);
-        recordingTimeoutRef.current = null;
-      }
-    };
+        setIsTranscribing(true);
+        
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
+          
+          const formData = new FormData();
+          formData.append('audio_file', audioFile);
+          formData.append('meal_type', mealType);
+          formData.append('start_time', startTimeRef.current?.toISOString() || new Date().toISOString());
+          formData.append('end_time', new Date().toISOString());
 
-    recognitionRef.current = recognition;
-    startTimeRef.current = new Date();
-    setIsRecording(true);
-    setIsTranscribing(true);
-    setTranscript("");
-    setNutritionData(null);
-    recognition.start();
+          const response = await api.transcribeAudio(formData);
+          setTranscript(response.data.transcript);
+        } catch (error) {
+          console.error('Transcription error:', error);
+          alert('Failed to transcribe audio. Please try again.');
+        } finally {
+          setIsRecording(false);
+          setIsTranscribing(false);
+        }
+      };
 
-    recordingTimeoutRef.current = setTimeout(() => {
-      stopRecording();
-    }, 120000);
+      mediaRecorderRef.current = mediaRecorder;
+      startTimeRef.current = new Date();
+      setIsRecording(true);
+      setTranscript("");
+      setNutritionData(null);
+      mediaRecorder.start();
+
+      recordingTimeoutRef.current = setTimeout(() => {
+        stopRecording();
+      }, 120000);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      alert('Failed to access microphone. Please check permissions.');
+    }
   };
 
   const stopRecording = () => {
-    if (recognitionRef.current && isRecording) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
-      setIsTranscribing(false);
+    if (mediaRecorderRef.current && isRecording && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
       
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
@@ -292,7 +294,17 @@ export default function LogMeal() {
                 </div>
                 <h3 className="font-semibold text-[#6B5B95]">What you said</h3>
               </div>
-              <p className="text-[#8B7355] leading-relaxed bg-white/30 p-4 rounded-[12px]">{transcript}</p>
+              <textarea
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                className="w-full text-[#8B7355] leading-relaxed bg-white/30 p-4 rounded-[12px] border-2 border-transparent focus:border-[#6B5B95]/30 focus:outline-none resize-none min-h-[100px]"
+                rows={4}
+                placeholder="Edit your transcript here..."
+              />
+              
+              <p className="text-xs text-[#8B7355] text-center italic">
+                ✨ Feel free to edit if we missed something! ✨
+              </p>
               
               <p className="text-xs text-[#8B7355] text-center">
                 Look good? Click analyze or re-record!
@@ -358,4 +370,3 @@ export default function LogMeal() {
     </div>
   );
 }
-
