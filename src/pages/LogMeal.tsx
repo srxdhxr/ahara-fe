@@ -435,7 +435,7 @@ export default function LogMeal() {
       )}
 
       {/* Meal Type Selector */}
-      <div className="mb-3 flex-shrink-0">
+      <div className="mb-6 flex-shrink-0">
         <MealTypeSelector selected={mealType} onSelect={setMealType} />
       </div>
 
@@ -443,7 +443,7 @@ export default function LogMeal() {
       <div className="flex-1 flex flex-col gap-3 overflow-y-auto pb-2">
         {/* Record Button - Show for all users, but disabled if no details */}
         {!transcript && !isTranscribing && (
-          <div className="flex justify-center flex-shrink-0">
+          <div className="flex justify-center flex-shrink-0 mt-8">
             <button
               onClick={toggleRecording}
               disabled={!hasUserDetails || isTranscribing || processMutation.isPending}
