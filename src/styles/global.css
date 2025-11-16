@@ -1,9 +1,19 @@
 /* Claymorphism Design System */
 
+/* Safe Area Support for Notched Devices */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sar: env(safe-area-inset-right);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+}
+
 body {
   background: linear-gradient(135deg, #f5f1e8 0%, #e8dcc8 50%, #f0e5d4 100%);
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  overflow-x: hidden;
 }
 
 /* Clay Shadow Effects */
