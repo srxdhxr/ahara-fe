@@ -230,6 +230,9 @@ export default function LogMeal() {
 
           const formData = new FormData();
           formData.append('audio_file', audioFile);
+          formData.append('meal_type', mealType);
+          formData.append('start_time', startTimeRef.current?.toISOString() || new Date().toISOString());
+          formData.append('end_time', new Date().toISOString());
 
           const response = await api.transcribeAudio(formData);
           setTranscript(response.data.transcript);
