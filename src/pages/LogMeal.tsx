@@ -227,12 +227,9 @@ export default function LogMeal() {
         try {
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
           const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
-          
+
           const formData = new FormData();
           formData.append('audio_file', audioFile);
-          formData.append('meal_type', mealType);
-          formData.append('start_time', startTimeRef.current?.toISOString() || new Date().toISOString());
-          formData.append('end_time', new Date().toISOString());
 
           const response = await api.transcribeAudio(formData);
           setTranscript(response.data.transcript);
