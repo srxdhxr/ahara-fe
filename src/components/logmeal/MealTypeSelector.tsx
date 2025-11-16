@@ -18,30 +18,30 @@ export default function MealTypeSelector({ selected, onSelect }: Props) {
       {mealTypes.map((meal) => {
         const Icon = meal.icon;
         const isSelected = selected === meal.value;
-        
+
         return (
           <button
             key={meal.value}
             onClick={() => onSelect(meal.value)}
             className={`
               flex flex-col items-center justify-center gap-1 p-2 flex-1 rounded-[12px] transition-all duration-300
-              ${isSelected 
-                ? `bg-gradient-to-br ${meal.color} clay-shadow` 
+              ${isSelected
+                ? `bg-gradient-to-br ${meal.color} clay-shadow`
                 : 'bg-white/50 clay-inset'
               }
-              clay-hover min-h-[60px] max-h-[70px]
+              clay-hover h-[56px]
             `}
           >
             <div className={`
-              w-8 h-8 rounded-[10px] flex items-center justify-center transition-all flex-shrink-0
+              w-7 h-7 rounded-[9px] flex items-center justify-center transition-all flex-shrink-0
               ${isSelected ? 'bg-white/50 clay-inset' : 'bg-transparent'}
             `}>
-              <Icon 
-                className={`w-4 h-4 ${isSelected ? 'text-[#6B5B95]' : 'text-[#8B7355]'}`}
+              <Icon
+                className={`w-3.5 h-3.5 ${isSelected ? 'text-[#6B5B95]' : 'text-[#8B7355]'}`}
                 strokeWidth={2}
               />
             </div>
-            <span className={`text-[10px] font-medium leading-tight ${isSelected ? 'text-[#6B5B95]' : 'text-[#8B7355]'}`}>
+            <span className={`text-[9px] font-medium leading-tight ${isSelected ? 'text-[#6B5B95]' : 'text-[#8B7355]'}`}>
               {meal.label}
             </span>
           </button>

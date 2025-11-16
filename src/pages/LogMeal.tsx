@@ -15,11 +15,15 @@ interface ModalProps {
 
 function Modal({ isOpen, onClose, children }: ModalProps) {
   if (!isOpen) return null;
-  
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pb-24 bg-black/30 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-[#F5F1ED] rounded-[24px] clay-shadow max-w-md w-full max-h-[75vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-[#F5F1ED] rounded-t-[24px] sm:rounded-[24px] clay-shadow max-w-md w-full max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="p-4 overflow-y-auto">
           {children}
         </div>
       </div>
@@ -324,130 +328,133 @@ export default function LogMeal() {
   };
 
   return (
-    <div className="space-y-6 min-h-[calc(100vh-200px)] flex flex-col max-w-md mx-auto w-full px-4">
+    <div className="flex flex-col max-w-md mx-auto w-full px-4 h-[calc(100dvh-8rem)] overflow-hidden">
 
       {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-xl font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
+      <div className="space-y-0.5 mb-3 flex-shrink-0">
+        <h1 className="text-lg font-bold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
           Hey {userName},
         </h1>
         {hasUserDetails === true && (
-          <p className="text-[#8B7355] text-xs">
-            Describe what you ate with details and quantities - the more specific, the better!
+          <p className="text-[#8B7355] text-[11px] leading-tight">
+            Describe what you ate with details and quantities
           </p>
         )}
       </div>
 
       {/* App Explanation - Only show when user doesn't have details */}
       {hasUserDetails === false && (
-        <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-6 clay-shadow text-center space-y-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#FFE8D6] to-[#FFE0E8] rounded-[18px] flex items-center justify-center mx-auto clay-inset">
-            <Sparkles className="w-8 h-8 text-[#6B5B95]" />
+        <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-4 clay-shadow text-center space-y-3 mb-3 flex-shrink-0">
+          <div className="w-12 h-12 bg-gradient-to-br from-[#FFE8D6] to-[#FFE0E8] rounded-[16px] flex items-center justify-center mx-auto clay-inset">
+            <Sparkles className="w-6 h-6 text-[#6B5B95]" />
           </div>
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
+          <div className="space-y-1.5">
+            <h2 className="text-base font-semibold text-[#6B5B95]" style={{ fontFamily: 'Georgia, serif' }}>
               Welcome to Ahara
             </h2>
-            <p className="text-sm text-[#8B7355] leading-relaxed">
-              Your personal AI nutritionist that helps you track meals, monitor your daily nutrition, and get personalized dietary advice. Simply speak or type what you eat, and we'll handle the rest!
+            <p className="text-xs text-[#8B7355] leading-relaxed">
+              Your personal AI nutritionist. Simply speak what you eat, and we'll handle the rest!
             </p>
           </div>
           <button
             onClick={() => navigate('/profile')}
-            className="w-full h-12 bg-gradient-to-r from-[#E8DEFF] to-[#D4E7FF] text-[#6B5B95] rounded-[16px] clay-shadow font-semibold hover:scale-105 transition-all"
+            className="w-full h-11 bg-gradient-to-r from-[#E8DEFF] to-[#D4E7FF] text-[#6B5B95] rounded-[16px] clay-shadow font-semibold hover:scale-105 transition-all"
           >
             Create Your Profile
           </button>
         </div>
       )}
 
-      {/* Calory Tracker Container */}
-      {hasUserDetails === true && todayCalGoal !== null && (
-        <div className="bg-white/50 backdrop-blur-sm rounded-[16px] px-4 py-1.5 clay-shadow -mx-4">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-xs font-semibold text-[#6B5B95]">Tracker</h2>
-            {calorieStatus && (
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  calorieStatus === 'green' 
-                    ? 'bg-green-500 animate-pulse' 
-                    : 'bg-red-500 animate-pulse'
-                }`}></div>
-                <span className={`text-[9px] font-medium ${
-                  calorieStatus === 'green' 
-                    ? 'text-green-600' 
-                    : 'text-red-600'
-                }`}>
-                  {calorieStatus === 'green' ? 'On Track' : 'Over Consumed!'}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[9px] text-[#8B7355] mb-0.5">Current</p>
-              <p className="text-sm font-bold text-[#6B5B95]">{Math.round(todayTotalCalories)}</p>
-            </div>
-            <div className="text-center">
-              <div className="w-px h-6 bg-[#E8DEFF] mx-auto"></div>
-            </div>
-            <div className="text-right">
-              <p className="text-[9px] text-[#8B7355] mb-0.5">Goal</p>
-              <p className="text-sm font-bold text-[#6B5B95]">{todayCalGoal}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Today's Total Container */}
+      {/* Calory Tracker & Today's Total - Compact Combined View */}
       {hasUserDetails === true && (
-        <div className="bg-white/50 backdrop-blur-sm rounded-[16px] px-4 py-1.5 clay-shadow -mx-4 -mt-1">
-          <p className="text-xs text-[#8B7355] mb-1 text-center">Today's Total</p>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex-1 text-center">
-              <p className="text-sm font-semibold text-[#6B5B95]">{Math.round(todayTotalCalories)}</p>
-              <p className="text-[10px] text-[#8B7355]">cal</p>
+        <div className="space-y-2 mb-3 flex-shrink-0">
+          {/* Tracker */}
+          {todayCalGoal !== null && (
+            <div className="bg-white/50 backdrop-blur-sm rounded-[14px] px-3 py-1.5 clay-shadow -mx-4">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-[10px] font-semibold text-[#6B5B95]">Tracker</h2>
+                {calorieStatus && (
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${
+                      calorieStatus === 'green'
+                        ? 'bg-green-500 animate-pulse'
+                        : 'bg-red-500 animate-pulse'
+                    }`}></div>
+                    <span className={`text-[9px] font-medium ${
+                      calorieStatus === 'green'
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }`}>
+                      {calorieStatus === 'green' ? 'On Track' : 'Over!'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] text-[#8B7355] mb-0.5">Current</p>
+                  <p className="text-sm font-bold text-[#6B5B95]">{Math.round(todayTotalCalories)}</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-px h-5 bg-[#E8DEFF] mx-auto"></div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-[#8B7355] mb-0.5">Goal</p>
+                  <p className="text-sm font-bold text-[#6B5B95]">{todayCalGoal}</p>
+                </div>
+              </div>
             </div>
-            <div className="w-px h-6 bg-[#E8DEFF]"></div>
-            <div className="flex-1 text-center">
-              <p className="text-sm font-semibold text-[#6B5B95]">{Math.round(todayTotalProtein)}</p>
-              <p className="text-[10px] text-[#8B7355]">protein</p>
-            </div>
-            <div className="w-px h-6 bg-[#E8DEFF]"></div>
-            <div className="flex-1 text-center">
-              <p className="text-sm font-semibold text-[#6B5B95]">{Math.round(todayTotalCarbs)}</p>
-              <p className="text-[10px] text-[#8B7355]">carbs</p>
-            </div>
-            <div className="w-px h-6 bg-[#E8DEFF]"></div>
-            <div className="flex-1 text-center">
-              <p className="text-sm font-semibold text-[#6B5B95]">{Math.round(todayTotalFat)}</p>
-              <p className="text-[10px] text-[#8B7355]">fat</p>
+          )}
+
+          {/* Today's Total */}
+          <div className="bg-white/50 backdrop-blur-sm rounded-[14px] px-3 py-1.5 clay-shadow -mx-4">
+            <p className="text-[10px] text-[#8B7355] mb-1 text-center font-medium">Today's Total</p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 text-center">
+                <p className="text-xs font-semibold text-[#6B5B95]">{Math.round(todayTotalCalories)}</p>
+                <p className="text-[9px] text-[#8B7355]">cal</p>
+              </div>
+              <div className="w-px h-5 bg-[#E8DEFF]"></div>
+              <div className="flex-1 text-center">
+                <p className="text-xs font-semibold text-[#6B5B95]">{Math.round(todayTotalProtein)}</p>
+                <p className="text-[9px] text-[#8B7355]">protein</p>
+              </div>
+              <div className="w-px h-5 bg-[#E8DEFF]"></div>
+              <div className="flex-1 text-center">
+                <p className="text-xs font-semibold text-[#6B5B95]">{Math.round(todayTotalCarbs)}</p>
+                <p className="text-[9px] text-[#8B7355]">carbs</p>
+              </div>
+              <div className="w-px h-5 bg-[#E8DEFF]"></div>
+              <div className="flex-1 text-center">
+                <p className="text-xs font-semibold text-[#6B5B95]">{Math.round(todayTotalFat)}</p>
+                <p className="text-[9px] text-[#8B7355]">fat</p>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Meal Type Selector */}
-      <div className={`${hasUserDetails ? '-mt-2' : ''} transition-all duration-500 ${(transcript || nutritionData) ? 'scale-95' : ''}`}>
+      <div className="mb-3 flex-shrink-0">
         <MealTypeSelector selected={mealType} onSelect={setMealType} />
       </div>
 
-      {/* Main Content Area - Fixed Space */}
-      <div className="flex-1 flex flex-col gap-4">
+      {/* Main Content Area - Scrollable if needed */}
+      <div className="flex-1 flex flex-col gap-3 overflow-y-auto pb-2">
         {/* Record Button - Show for all users, but disabled if no details */}
         {!transcript && !isTranscribing && (
-          <div className="flex justify-center -mt-2">
+          <div className="flex justify-center flex-shrink-0">
             <button
               onClick={toggleRecording}
               disabled={!hasUserDetails || isTranscribing || processMutation.isPending}
-              className={`relative w-48 h-12 rounded-[16px] transition-all duration-300 flex items-center justify-center gap-2 ${
-                isRecording 
-                  ? 'bg-gradient-to-br from-[#FFE0E8] to-[#FFE8D6] clay-shadow animate-pulse' 
+              className={`relative w-44 h-11 rounded-[16px] transition-all duration-300 flex items-center justify-center gap-2 ${
+                isRecording
+                  ? 'bg-gradient-to-br from-[#FFE0E8] to-[#FFE8D6] clay-shadow animate-pulse'
                   : 'bg-gradient-to-br from-[#E8DEFF] to-[#D4E7FF] clay-shadow'
               } ${hasUserDetails && !isRecording ? 'hover:scale-105' : ''} disabled:opacity-50 disabled:cursor-not-allowed ${
-                isRecording 
-                  ? 'ring-2 ring-red-400 ring-opacity-75 shadow-[0_0_8px_rgba(239,68,68,0.3)]' 
-                  : hasUserDetails 
+                isRecording
+                  ? 'ring-2 ring-red-400 ring-opacity-75 shadow-[0_0_8px_rgba(239,68,68,0.3)]'
+                  : hasUserDetails
                     ? 'ring-2 ring-[#6B5B95] ring-opacity-50 shadow-[0_0_8px_rgba(107,91,149,0.25)]'
                     : ''
               }`}
@@ -455,7 +462,7 @@ export default function LogMeal() {
               {isRecording ? (
                 <>
                   <MicOff className="w-5 h-5 text-[#6B5B95]" strokeWidth={2} />
-                  <span className="text-sm font-semibold text-[#6B5B95]">Stop Recording</span>
+                  <span className="text-sm font-semibold text-[#6B5B95]">Stop</span>
                 </>
               ) : (
                 <>
@@ -469,44 +476,40 @@ export default function LogMeal() {
 
         {/* Transcribing */}
         {isTranscribing && (
-          <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-8 clay-shadow text-center w-full">
-            <div className="w-16 h-16 border-4 border-[#E8DEFF] border-t-[#6B5B95] rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-[#6B5B95] font-semibold">Transcribing your recording...</p>
-            <p className="text-[#8B7355] text-sm mt-2">This will only take a moment</p>
+          <div className="bg-white/50 backdrop-blur-sm rounded-[18px] p-6 clay-shadow text-center w-full flex-shrink-0">
+            <div className="w-12 h-12 border-4 border-[#E8DEFF] border-t-[#6B5B95] rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-[#6B5B95] font-semibold text-sm">Transcribing...</p>
+            <p className="text-[#8B7355] text-xs mt-1">Just a moment</p>
           </div>
         )}
 
         {/* Transcript - Replaces Record Button */}
         {transcript && !nutritionData && !isTranscribing && (
-          <div className="space-y-4">
-            <div className="bg-white/50 backdrop-blur-sm rounded-[20px] p-6 clay-shadow space-y-4 w-full">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-[#D4F1E8] rounded-[12px] flex items-center justify-center clay-inset">
-                  <Sparkles className="w-4 h-4 text-[#6B5B95]" />
+          <div className="space-y-3 flex-shrink-0">
+            <div className="bg-white/50 backdrop-blur-sm rounded-[18px] p-4 clay-shadow space-y-3 w-full">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-[#D4F1E8] rounded-[10px] flex items-center justify-center clay-inset">
+                  <Sparkles className="w-3.5 h-3.5 text-[#6B5B95]" />
                 </div>
-                <h3 className="font-semibold text-[#6B5B95]">What you said</h3>
+                <h3 className="font-semibold text-[#6B5B95] text-sm">What you said</h3>
               </div>
               <textarea
                 value={transcript}
                 onChange={(e) => setTranscript(e.target.value)}
-                className="w-full text-[#8B7355] leading-relaxed bg-white/30 p-4 rounded-[12px] border-2 border-transparent focus:border-[#6B5B95]/30 focus:outline-none resize-none min-h-[100px]"
-                rows={4}
+                className="w-full text-[#8B7355] text-xs leading-relaxed bg-white/30 p-3 rounded-[12px] border-2 border-transparent focus:border-[#6B5B95]/30 focus:outline-none resize-none min-h-[80px]"
+                rows={3}
                 placeholder="Edit your transcript here..."
               />
-              
-              <p className="text-xs text-[#8B7355] text-center italic">
-                ✨ Feel free to edit if we missed something! ✨
-              </p>
-              
-              <p className="text-xs text-[#8B7355] text-center">
-                Look good? Click analyze or re-record!
+
+              <p className="text-[10px] text-[#8B7355] text-center">
+                Feel free to edit • Click analyze when ready!
               </p>
             </div>
-            
-            <div className="flex gap-3">
+
+            <div className="flex gap-2">
               <button
                 onClick={handleReRecord}
-                className="flex-1 h-12 bg-white/50 clay-shadow text-[#6B5B95] rounded-[16px] font-semibold flex items-center justify-center gap-2"
+                className="flex-1 h-10 bg-white/50 clay-shadow text-[#6B5B95] rounded-[14px] font-medium flex items-center justify-center gap-1.5 text-sm"
               >
                 <Mic className="w-4 h-4" />
                 Re-record
@@ -514,7 +517,7 @@ export default function LogMeal() {
               <button
                 onClick={() => processMutation.mutate()}
                 disabled={processMutation.isPending}
-                className="flex-1 h-12 bg-gradient-to-r from-[#E8DEFF] to-[#D4E7FF] text-[#6B5B95] rounded-[16px] clay-shadow font-semibold disabled:opacity-50"
+                className="flex-1 h-10 bg-gradient-to-r from-[#E8DEFF] to-[#D4E7FF] text-[#6B5B95] rounded-[14px] clay-shadow font-semibold disabled:opacity-50 text-sm"
               >
                 {processMutation.isPending ? "Analyzing..." : "Analyze"}
               </button>
@@ -527,32 +530,32 @@ export default function LogMeal() {
       {/* Nutrition Modal */}
       <Modal isOpen={showModal} onClose={handleCloseModal}>
         {processMutation.isPending ? (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 border-4 border-[#E8DEFF] border-t-[#6B5B95] rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-[#6B5B95] font-semibold">Analyzing nutrition...</p>
-            <p className="text-[#8B7355] text-sm mt-2">This will only take a moment</p>
+          <div className="text-center py-6">
+            <div className="w-12 h-12 border-4 border-[#E8DEFF] border-t-[#6B5B95] rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-[#6B5B95] font-semibold text-sm">Analyzing nutrition...</p>
+            <p className="text-[#8B7355] text-xs mt-1">Just a moment</p>
           </div>
         ) : nutritionData ? (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-[#6B5B95] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+          <div className="space-y-3">
+            <h2 className="text-base font-bold text-[#6B5B95] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
               Nutrition Results
             </h2>
-            
+
             <NutritionDisplay data={nutritionData} />
-            
-            <div className="flex gap-3 pt-2">
+
+            <div className="flex gap-2 pt-2">
               <button
                 onClick={handleDiscard}
-                className="flex-1 h-12 rounded-[16px] bg-white/50 clay-shadow flex items-center justify-center gap-2 text-[#8B7355] font-semibold"
+                className="flex-1 h-11 rounded-[14px] bg-white/50 clay-shadow flex items-center justify-center gap-1.5 text-[#8B7355] font-medium text-sm"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
                 Discard
               </button>
               <button
                 onClick={handleDone}
-                className="flex-1 h-12 bg-gradient-to-r from-[#D4F1E8] to-[#D4E7FF] text-[#6B5B95] rounded-[16px] clay-shadow font-semibold flex items-center justify-center gap-2"
+                className="flex-1 h-11 bg-gradient-to-r from-[#D4F1E8] to-[#D4E7FF] text-[#6B5B95] rounded-[14px] clay-shadow font-semibold flex items-center justify-center gap-1.5 text-sm"
               >
-                <Save className="w-5 h-5" />
+                <Save className="w-4 h-4" />
                 Done
               </button>
             </div>
