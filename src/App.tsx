@@ -19,14 +19,25 @@ const queryClient = new QueryClient({
   },
 });
 
+// Root Redirect Component - handles initial landing
+function RootRedirect() {
+  const hasToken = localStorage.getItem('access_token');
+
+  if (hasToken) {
+    return <Navigate to="/log-meal" replace />;
+  }
+
+  return <Navigate to="/auth" replace />;
+}
+
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const hasToken = localStorage.getItem('access_token');
-  
+
   if (!hasToken) {
     return <Navigate to="/auth" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -39,15 +50,8 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/verify-otp" element={<OTPVerification />} />
           
-          {/* Protected Routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Navigate to="/log-meal" replace />
-              </ProtectedRoute>
-            }
-          />
+          {/* Root Route - redirects based on auth status */}
+          <Route path="/" element={<RootRedirect />} />
           
           <Route
             path="/chat"
