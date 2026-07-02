@@ -24,8 +24,8 @@ export default function AppShell({
   return (
     <div className="dot-grid-faint flex h-dvh justify-center sm:items-center sm:py-8">
       <div
-        className="grid h-full w-full grid-rows-[auto_auto_1fr_auto] overflow-hidden
-                   border-ink bg-cream px-safe
+        className="grid h-full w-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto]
+                   overflow-hidden border-ink bg-cream px-safe
                    sm:h-[min(85dvh,800px)] sm:max-w-md sm:border-[3px] sm:shadow-pixel"
       >
         {/* header owns the notch area: safe-area padding INSIDE its bg */}

@@ -13,7 +13,7 @@ export default function MessageBubble({
     <div className={`flex ${isYou ? 'justify-end' : 'justify-start'}`}>
       <div
         className={[
-          'max-w-[85%] border-[2px] border-ink px-3 py-2 text-sm leading-snug rounded-[4px]',
+          'max-w-[85%] break-words border-[2px] border-ink px-3 py-2 text-sm leading-snug rounded-[4px]',
           isYou ? 'bg-purple text-cream shadow-pixel-sm' : 'bg-white text-ink shadow-pixel-sm',
         ].join(' ')}
       >
