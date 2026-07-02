@@ -1,8 +1,8 @@
+import apiClient from './client';
+
 // ---------------------------------------------------------------------------
-// Auth API. Mock for now — ahara-engine has no session endpoints yet. The
-// interface is what the engine will implement (email OTP, mirroring its
-// email-verification onboarding). Swap USE_MOCK when the endpoints exist.
-// Token storage/injection/expiry is handled by src/api/client.ts middleware.
+// Auth: email OTP -> JWT (ahara-engine /api/auth). Token storage/injection/
+// expiry is handled by src/api/client.ts middleware.
 // ---------------------------------------------------------------------------
 
 export const TOKEN_KEY = 'access_token';
@@ -12,29 +12,15 @@ export interface AuthApi {
   verifyOtp(email: string, code: string): Promise<{ access_token: string }>;
 }
 
-const USE_MOCK = true;
-
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-const mockAuth: AuthApi = {
+export const authApi: AuthApi = {
   async requestOtp(email: string) {
-    await wait(500);
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      throw new Error('enter a valid email');
-    }
+    await apiClient.post('/api/auth/request-otp', { email });
   },
-  async verifyOtp(_email: string, code: string) {
-    await wait(500);
-    if (!/^\d{6}$/.test(code)) {
-      throw new Error('code is 6 digits');
-    }
-    // DEMO ONLY: any 6-digit code passes. Real verification happens
-    // server-side once ahara-engine exposes /auth endpoints.
-    return { access_token: `demo.${crypto.randomUUID()}` };
+  async verifyOtp(email: string, code: string) {
+    const { data } = await apiClient.post('/api/auth/verify-otp', { email, code });
+    return data as { access_token: string };
   },
 };
-
-export const authApi: AuthApi = USE_MOCK ? mockAuth : mockAuth;
 
 export const session = {
   isAuthed: () => Boolean(localStorage.getItem(TOKEN_KEY)),

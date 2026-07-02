@@ -53,7 +53,12 @@ export default function ChatApp() {
     ]);
     setTyping(true);
     try {
-      await chatApi.sendMessage(activeDate, text);
+      const replies = await chatApi.sendMessage(activeDate, text);
+      queryClient.setQueryData<ChatMessage[]>(['messages', activeDate], (old = []) => [
+        ...old,
+        ...replies,
+      ]);
+      // Re-sync with the server (ids for the optimistic message, ordering)
       await queryClient.invalidateQueries({ queryKey: ['messages', activeDate] });
     } finally {
       setTyping(false);

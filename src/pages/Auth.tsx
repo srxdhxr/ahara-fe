@@ -33,7 +33,8 @@ export default function Auth() {
       session.start(access_token);
       navigate('/', { replace: true });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'something went wrong');
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      setError(status === 401 ? 'invalid or expired code' : 'something went wrong — try again');
     } finally {
       setBusy(false);
     }

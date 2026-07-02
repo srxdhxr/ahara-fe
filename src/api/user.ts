@@ -1,7 +1,8 @@
+import apiClient from './client';
+
 // ---------------------------------------------------------------------------
-// User profile / health / preferences API, shaped to the ahara-engine User
-// model (models/user.py) and onboarding facts (allergies, medications, goals).
-// Mock persists to localStorage until the engine exposes profile endpoints.
+// Profile / health / preferences over ahara-engine /api/me. email and
+// phone_number are read-only server-side (login + SMS identity).
 // ---------------------------------------------------------------------------
 
 export type Goal =
@@ -21,90 +22,47 @@ export const GOAL_LABELS: Record<Goal, string> = {
   other: 'OTHER',
 };
 
-export type UserProfile = {
-  first_name: string;
-  email: string;
-  phone_number: string;
-  timezone: string;
-};
+export const KNOWN_GOALS = Object.keys(GOAL_LABELS) as Goal[];
 
-export type HealthData = {
+export type Me = {
+  first_name: string;
+  email: string; // read-only
+  phone_number: string; // read-only
+  timezone: string;
   sex: 'M' | 'F' | '';
   age: number | null;
   weight_lb: number | null;
   height_in: number | null;
 };
 
+export type MeUpdate = Partial<
+  Pick<Me, 'first_name' | 'timezone' | 'sex' | 'age' | 'weight_lb' | 'height_in'>
+>;
+
 export type Preferences = {
   allergies: string[];
   medications: string[];
-  goals: Goal[];
+  // Server stores goals as free-text facts; onboarding may have written
+  // sentences, the web app writes Goal keys. Treat as strings, render known
+  // keys as toggles and the rest as removable pills.
+  goals: string[];
 };
 
-export interface UserApi {
-  getProfile(): Promise<UserProfile>;
-  updateProfile(p: UserProfile): Promise<void>;
-  getHealth(): Promise<HealthData>;
-  updateHealth(h: HealthData): Promise<void>;
-  getPreferences(): Promise<Preferences>;
-  updatePreferences(p: Preferences): Promise<void>;
-}
-
-const USE_MOCK = true;
-const KEY = 'mock_user_v1';
-
-type MockUser = { profile: UserProfile; health: HealthData; prefs: Preferences };
-
-const defaults: MockUser = {
-  profile: {
-    first_name: 'Sridhar',
-    email: 'you@example.com',
-    phone_number: '+15551234567',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+export const userApi = {
+  async getMe(): Promise<Me> {
+    const { data } = await apiClient.get('/api/me');
+    return data as Me;
   },
-  health: { sex: 'M', age: 27, weight_lb: 165, height_in: 70 },
-  prefs: { allergies: [], medications: [], goals: ['eat_more_protein'] },
-};
-
-const load = (): MockUser => {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return { ...defaults, ...JSON.parse(raw) };
-  } catch {
-    // corrupted — fall through to defaults
-  }
-  return defaults;
-};
-
-const save = (u: MockUser) => localStorage.setItem(KEY, JSON.stringify(u));
-
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-const mockUser: UserApi = {
-  async getProfile() {
-    await wait(120);
-    return load().profile;
+  async updateMe(update: MeUpdate): Promise<Me> {
+    const { data } = await apiClient.put('/api/me', update);
+    return data as Me;
   },
-  async updateProfile(profile) {
-    await wait(200);
-    save({ ...load(), profile });
+  async getPreferences(): Promise<Preferences> {
+    const { data } = await apiClient.get('/api/me/preferences');
+    return data as Preferences;
   },
-  async getHealth() {
-    await wait(120);
-    return load().health;
-  },
-  async updateHealth(health) {
-    await wait(200);
-    save({ ...load(), health });
-  },
-  async getPreferences() {
-    await wait(120);
-    return load().prefs;
-  },
-  async updatePreferences(prefs) {
-    await wait(200);
-    save({ ...load(), prefs });
+  async updatePreferences(prefs: Preferences): Promise<Preferences> {
+    const { data } = await apiClient.put('/api/me/preferences', prefs);
+    return data as Preferences;
   },
 };
-
-export const userApi: UserApi = USE_MOCK ? mockUser : mockUser;

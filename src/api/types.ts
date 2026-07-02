@@ -14,5 +14,6 @@ export type DaySummary = {
 export interface ChatApi {
   listDays(): Promise<DaySummary[]>;
   listMessages(date: string): Promise<ChatMessage[]>;
-  sendMessage(date: string, text: string): Promise<ChatMessage>;
+  /** Sends a message and resolves with Maya's reply burst (1–3 messages). */
+  sendMessage(date: string, text: string): Promise<ChatMessage[]>;
 }
