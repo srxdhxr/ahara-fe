@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { chatApi } from '../api/chat';
@@ -62,6 +62,26 @@ export default function ChatApp() {
 
   const resync = () => queryClient.invalidateQueries({ queryKey: ['messages', activeDate] });
 
+  // Progressive replies: the agent writes burst messages to the DB one at a
+  // time over its 20-40s run, but the POST only resolves at the end. Polling
+  // the thread while "typing" surfaces each message the moment it lands.
+  // First poll waits 4s so voice placeholders aren't wiped pre-transcription.
+  const pollDelay = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopPolling = () => {
+    if (pollDelay.current) clearTimeout(pollDelay.current);
+    if (pollInterval.current) clearInterval(pollInterval.current);
+    pollDelay.current = null;
+    pollInterval.current = null;
+  };
+  const startPolling = () => {
+    stopPolling();
+    pollDelay.current = setTimeout(() => {
+      pollInterval.current = setInterval(resync, 2500);
+    }, 4000);
+  };
+  useEffect(() => stopPolling, []);
+
   const handleFailure = async (e: unknown) => {
     const status = (e as { response?: { status?: number } })?.response?.status;
     if (status === 409) {
@@ -76,13 +96,14 @@ export default function ChatApp() {
     if (!activeDate) return;
     appendLocal([{ id: -Date.now(), from: 'you', text, at: new Date().toISOString() }]);
     setTyping(true);
+    startPolling();
     try {
-      const replies = await chatApi.sendMessage(activeDate, text);
-      appendLocal(replies);
+      await chatApi.sendMessage(activeDate, text);
       await resync();
     } catch (e) {
       await handleFailure(e);
     } finally {
+      stopPolling();
       setTyping(false);
     }
   };
@@ -93,18 +114,14 @@ export default function ChatApp() {
       { id: -Date.now(), from: 'you', text: '▶ voice note…', at: new Date().toISOString() },
     ]);
     setTyping(true);
+    startPolling();
     try {
-      const { transcript, replies } = await chatApi.sendVoice(activeDate, blob, mime);
-      // swap the placeholder for the real transcript + replies
-      queryClient.setQueryData<ChatMessage[]>(['messages', activeDate], (old = []) => [
-        ...old.filter((m) => m.id >= 0),
-        transcript,
-        ...replies,
-      ]);
+      await chatApi.sendVoice(activeDate, blob, mime);
       await resync();
     } catch (e) {
       await handleFailure(e);
     } finally {
+      stopPolling();
       setTyping(false);
     }
   };
