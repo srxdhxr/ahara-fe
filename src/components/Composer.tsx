@@ -84,11 +84,11 @@ export default function Composer({
         <button
           aria-label="Discard recording"
           onClick={() => stopRecording(false)}
-          className="pixel-press border-[2px] border-ink bg-cream px-3 py-2 font-pixel text-[10px] text-ink shadow-pixel-sm"
+          className="pixel-press flex min-h-11 min-w-11 shrink-0 items-center justify-center border-[2px] border-ink bg-cream p-2.5 font-pixel text-[10px] text-ink shadow-pixel-sm"
         >
           ✕
         </button>
-        <div className="flex flex-1 items-center gap-2 border-[2px] border-ink bg-white px-3 py-2">
+        <div className="flex min-h-11 flex-1 items-center gap-2 border-[2px] border-ink bg-white px-3 py-2.5">
           <span className="rec-pulse inline-block h-3 w-3 border-[2px] border-ink bg-purple" />
           <span className="cursor-blink font-mono text-sm">
             recording {mm}:{ss}
@@ -97,9 +97,9 @@ export default function Composer({
         <button
           aria-label="Stop and send"
           onClick={() => stopRecording(true)}
-          className="pixel-press border-[2px] border-ink bg-purple p-2.5 text-cream shadow-pixel-sm"
+          className="pixel-press flex min-h-11 min-w-11 shrink-0 items-center justify-center border-[2px] border-ink bg-purple p-2.5 text-cream shadow-pixel-sm"
         >
-          <Square size={16} strokeWidth={2.5} fill="currentColor" />
+          <Square size={14} strokeWidth={2.5} fill="currentColor" />
         </button>
       </div>
     );
@@ -112,7 +112,7 @@ export default function Composer({
           aria-label="Record a voice note"
           onClick={startRecording}
           disabled={disabled}
-          className="pixel-press shrink-0 border-[2px] border-ink bg-cream p-2.5 text-ink shadow-pixel-sm disabled:opacity-50"
+          className="pixel-press flex min-h-11 min-w-11 shrink-0 items-center justify-center border-[2px] border-ink bg-cream p-2.5 text-ink shadow-pixel-sm disabled:opacity-50"
         >
           <Mic size={16} strokeWidth={2.5} />
         </button>
@@ -129,12 +129,14 @@ export default function Composer({
         }
         placeholder="Text Maya…"
         aria-label="Message Maya"
-        className="min-w-0 flex-1 border-[2px] border-ink bg-white px-3 py-2 font-mono text-sm focus:bg-lavender focus:outline-none"
+        // text-base (16px): anything smaller makes iOS zoom the page on focus.
+        // rounded-none: Safari rounds inputs by default — off-brand here.
+        className="min-h-11 min-w-0 flex-1 rounded-none border-[2px] border-ink bg-white px-3 py-2.5 font-mono text-base focus:bg-lavender focus:outline-none"
       />
       <button
         onClick={submit}
         disabled={disabled || !text.trim()}
-        className="pixel-press shrink-0 border-[2px] border-ink bg-purple px-3 py-2.5 font-pixel text-[10px] text-cream shadow-pixel-sm disabled:opacity-50"
+        className="pixel-press min-h-11 shrink-0 border-[2px] border-ink bg-purple px-3 py-2.5 font-pixel text-[10px] tracking-wider text-cream shadow-pixel-sm disabled:opacity-50"
       >
         SEND
       </button>

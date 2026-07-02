@@ -29,20 +29,13 @@ export default function CalendarDropdown({
   const [month, setMonth] = useState(() => startOfMonth(parseISO(selected)));
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click / Escape
+  // Escape closes; outside taps are handled by the backdrop (touch-reliable)
   useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
+    return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
   const today = new Date();
@@ -53,12 +46,15 @@ export default function CalendarDropdown({
   });
 
   return (
-    <div
-      ref={ref}
-      className="absolute right-2 top-full z-20 mt-2 w-64 border-[3px] border-ink bg-cream p-3 shadow-pixel"
-      role="dialog"
-      aria-label="Calendar"
-    >
+    <>
+      {/* click-away backdrop — reliable on touch where mousedown listeners aren't */}
+      <div className="fixed inset-0 z-10" onClick={onClose} aria-hidden />
+      <div
+        ref={ref}
+        className="absolute right-2 top-full z-20 mt-2 w-64 border-[3px] border-ink bg-cream p-3 shadow-pixel"
+        role="dialog"
+        aria-label="Calendar"
+      >
       <div className="mb-2 flex items-center justify-between">
         <button
           aria-label="Previous month"
@@ -111,7 +107,8 @@ export default function CalendarDropdown({
             </button>
           );
         })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import type { DaySummary } from '../api/types';
 import CalendarDropdown from './CalendarDropdown';
@@ -18,6 +18,23 @@ export default function DateStrip({
   // a real drag (>5px) is suppressed so tabs don't fire on drag release.
   const stripRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
+
+  // Keep the selected tab visible — calendar picks can land off-screen
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const idx = days.findIndex((d) => d.date === selected);
+    if (idx < 0) return;
+    requestAnimationFrame(() => {
+      const btn = strip.children[idx] as HTMLElement | undefined;
+      if (!btn) return;
+      const left = btn.offsetLeft - 12;
+      const right = btn.offsetLeft + btn.offsetWidth + 12;
+      if (left < strip.scrollLeft) strip.scrollLeft = left;
+      else if (right > strip.scrollLeft + strip.clientWidth)
+        strip.scrollLeft = right - strip.clientWidth;
+    });
+  }, [selected, days]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     const el = stripRef.current;
@@ -50,7 +67,8 @@ export default function DateStrip({
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
-        className="no-scrollbar flex flex-1 cursor-grab touch-pan-x select-none items-center gap-2 overflow-x-auto active:cursor-grabbing"
+        // pb-1.5/px-1: room for the tabs' 2px offset shadows so they never clip
+        className="no-scrollbar flex flex-1 cursor-grab touch-pan-x select-none items-center gap-2 overflow-x-auto px-1 pb-1.5 pt-1 active:cursor-grabbing"
         role="tablist"
         aria-label="Days"
       >
@@ -62,7 +80,7 @@ export default function DateStrip({
               role="tab"
               aria-selected={isSelected}
               onClick={() => handleTab(d.date)}
-              className={`pixel-press shrink-0 border-[3px] border-ink px-3 py-1.5 font-pixel text-[10px] tracking-wider shadow-pixel-sm focus:outline-none focus-visible:bg-lavender ${
+              className={`pixel-press min-h-10 shrink-0 whitespace-nowrap border-[3px] border-ink px-3.5 py-2 font-pixel text-[10px] tracking-wider shadow-pixel-sm focus:outline-none focus-visible:bg-lavender ${
                 isSelected ? 'bg-purple text-cream' : 'bg-cream text-ink'
               }`}
             >
@@ -76,7 +94,7 @@ export default function DateStrip({
         aria-label="Pick a date"
         aria-expanded={calendarOpen}
         onClick={() => setCalendarOpen((v) => !v)}
-        className={`pixel-press shrink-0 border-[3px] border-ink p-1.5 shadow-pixel-sm focus:outline-none focus-visible:bg-lavender ${
+        className={`pixel-press mb-0.5 flex min-h-10 shrink-0 items-center justify-center border-[3px] border-ink px-2.5 py-2 shadow-pixel-sm focus:outline-none focus-visible:bg-lavender ${
           calendarOpen ? 'bg-purple text-cream' : 'bg-cream text-ink'
         }`}
       >

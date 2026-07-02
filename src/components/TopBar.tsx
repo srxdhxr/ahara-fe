@@ -29,7 +29,7 @@ export default function TopBar({
         <button
           aria-label="Settings"
           onClick={() => navigate('/settings')}
-          className="pixel-press border-[2px] border-ink bg-cream p-1.5 text-ink shadow-pixel-sm focus:outline-none focus-visible:bg-lavender"
+          className="pixel-press flex items-center justify-center border-[2px] border-ink bg-cream p-2 text-ink shadow-pixel-sm focus:outline-none focus-visible:bg-lavender"
         >
           <Settings size={16} strokeWidth={2.5} />
         </button>

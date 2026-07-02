@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { ChatMessage } from '../api/types';
 
 export default function MessageBubble({
@@ -39,12 +40,37 @@ export function TimeSeparator({ text }: { text: string }) {
   );
 }
 
+// What Maya's "doing" while the agent runs. Ordered like the real pipeline —
+// think → remember → log → cook-brain → math — so long waits read as work,
+// not lag. Cycles forward, then holds on the last one.
+const THINKING_STATUSES = [
+  'thinking',
+  'updating memory',
+  'recording the meal',
+  'tossing',
+  'sautéing',
+  'counting calories',
+  'double-checking the math',
+];
+
 export function TypingIndicator() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(
+      () => setStep((s) => Math.min(s + 1, THINKING_STATUSES.length - 1)),
+      2200,
+    );
+    return () => clearInterval(t);
+  }, []);
+
   return (
     <div className="flex justify-start">
-      <div className="max-w-[85%] rounded-[4px] border-[2px] border-ink bg-white px-3 py-2 text-sm leading-snug text-ink shadow-pixel-sm">
+      <div className="max-w-[85%] rounded-[4px] border-[2px] border-ink bg-white px-3 py-2 shadow-pixel-sm">
         <div className="mb-0.5 font-pixel text-[9px] tracking-wider text-brown">MAYA</div>
-        <div className="cursor-blink text-brown">typing</div>
+        <div className="cursor-blink font-mono text-xs text-brown">
+          {THINKING_STATUSES[step]}
+        </div>
       </div>
     </div>
   );
