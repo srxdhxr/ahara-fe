@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { ChatApi, ChatMessage, DaySummary } from './types';
+import type { ChatApi, ChatMessage, DayMacros, DaySummary } from './types';
 
 // ---------------------------------------------------------------------------
 // Chat API over ahara-engine /api/chat. Days/labels are computed server-side
@@ -15,6 +15,11 @@ export const chatApi: ChatApi = {
   async listMessages(date: string): Promise<ChatMessage[]> {
     const { data } = await apiClient.get('/api/chat/messages', { params: { date } });
     return data as ChatMessage[];
+  },
+
+  async getMacros(date: string): Promise<DayMacros> {
+    const { data } = await apiClient.get('/api/chat/macros', { params: { date } });
+    return data as DayMacros;
   },
 
   async sendMessage(date: string, text: string): Promise<ChatMessage[]> {

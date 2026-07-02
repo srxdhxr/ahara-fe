@@ -51,7 +51,7 @@ export default function CalendarDropdown({
       <div className="fixed inset-0 z-10" onClick={onClose} aria-hidden />
       <div
         ref={ref}
-        className="absolute right-2 top-full z-20 mt-2 w-64 border-[3px] border-ink bg-cream p-3 shadow-pixel"
+        className="absolute left-2 top-full z-20 mt-2 w-64 border-[3px] border-ink bg-cream p-3 shadow-pixel"
         role="dialog"
         aria-label="Calendar"
       >

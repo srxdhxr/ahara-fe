@@ -6,9 +6,13 @@ import { userApi } from '../api/user';
 import type { ChatMessage, DaySummary } from '../api/types';
 import AppShell from './AppShell';
 import TopBar from './TopBar';
-import DateStrip from './DateStrip';
+import ChatHeader from './ChatHeader';
 import ChatThread from './ChatThread';
 import Composer from './Composer';
+
+// Browser-local date is the single source of truth for "today" — server
+// labels proved raceable against the timezone sync (multi-agent audit).
+const localToday = () => format(new Date(), 'yyyy-MM-dd');
 
 function summarize(date: string): DaySummary {
   const d = parseISO(date);
@@ -19,48 +23,72 @@ function summarize(date: string): DaySummary {
 
 export default function ChatApp() {
   const queryClient = useQueryClient();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string>(localToday);
   const [typing, setTyping] = useState(false);
+  const todayRef = useRef(localToday());
 
-  // Keep the server's notion of the user's timezone honest — signups default
-  // to America/Los_Angeles. The browser knows the truth; sync once per load.
+  // Keep the server's notion of the user's timezone honest (it scopes the
+  // message-day windows and macro sums); refresh queries once it settles.
   useEffect(() => {
     const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (!browserTz) return;
     userApi
       .getMe()
       .then((me) => {
-        if (me.timezone !== browserTz) return userApi.updateMe({ timezone: browserTz });
+        if (me.timezone === browserTz) return;
+        return userApi.updateMe({ timezone: browserTz }).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['messages'] });
+          queryClient.invalidateQueries({ queryKey: ['macros'] });
+        });
       })
       .catch(() => {
         // non-fatal — worst case the server keeps its stored timezone
       });
-  }, []);
+  }, [queryClient]);
 
-  const { data: days = [] } = useQuery({
-    queryKey: ['days'],
-    queryFn: () => chatApi.listDays(),
-  });
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
 
-  const activeDate = selected ?? days[0]?.date ?? null;
-  // Calendar picks can land outside the strip's window — synthesize a summary
-  const activeDay = activeDate
-    ? (days.find((d) => d.date === activeDate) ?? summarize(activeDate))
-    : null;
+  // Day rollover: when the app is resumed (or midnight passes while open),
+  // recompute local today; if the user was sitting on the old today, move
+  // them to the new one. Deliberate historical picks are left alone.
+  useEffect(() => {
+    const check = () => {
+      if (document.visibilityState !== 'visible') return;
+      const now = localToday();
+      if (now !== todayRef.current) {
+        const wasOnToday = selectedRef.current === todayRef.current;
+        todayRef.current = now;
+        if (wasOnToday) setSelected(now);
+      }
+      queryClient.invalidateQueries({ queryKey: ['macros'] });
+    };
+    document.addEventListener('visibilitychange', check);
+    return () => document.removeEventListener('visibilitychange', check);
+  }, [queryClient]);
+
+  const activeDay = summarize(selected);
 
   const { data: messages = [], isLoading } = useQuery({
-    queryKey: ['messages', activeDate],
-    queryFn: () => chatApi.listMessages(activeDate!),
-    enabled: activeDate !== null,
+    queryKey: ['messages', selected],
+    queryFn: () => chatApi.listMessages(selected),
+  });
+
+  const { data: macros } = useQuery({
+    queryKey: ['macros', selected],
+    queryFn: () => chatApi.getMacros(selected),
   });
 
   const appendLocal = (msgs: ChatMessage[]) =>
-    queryClient.setQueryData<ChatMessage[]>(['messages', activeDate], (old = []) => [
+    queryClient.setQueryData<ChatMessage[]>(['messages', selected], (old = []) => [
       ...old,
       ...msgs,
     ]);
 
-  const resync = () => queryClient.invalidateQueries({ queryKey: ['messages', activeDate] });
+  const resync = () => {
+    queryClient.invalidateQueries({ queryKey: ['messages', selected] });
+    queryClient.invalidateQueries({ queryKey: ['macros', selected] });
+  };
 
   // Progressive replies: the agent writes burst messages to the DB one at a
   // time over its 20-40s run, but the POST only resolves at the end. Polling
@@ -88,18 +116,17 @@ export default function ChatApp() {
       // duplicate send — the first copy is still processing; poll for it
       setTimeout(resync, 8000);
     } else {
-      await resync();
+      resync();
     }
   };
 
   const send = async (text: string) => {
-    if (!activeDate) return;
     appendLocal([{ id: -Date.now(), from: 'you', text, at: new Date().toISOString() }]);
     setTyping(true);
     startPolling();
     try {
-      await chatApi.sendMessage(activeDate, text);
-      await resync();
+      await chatApi.sendMessage(selected, text);
+      resync();
     } catch (e) {
       await handleFailure(e);
     } finally {
@@ -109,15 +136,14 @@ export default function ChatApp() {
   };
 
   const sendVoice = async (blob: Blob, mime: string) => {
-    if (!activeDate) return;
     appendLocal([
       { id: -Date.now(), from: 'you', text: '▶ voice note…', at: new Date().toISOString() },
     ]);
     setTyping(true);
     startPolling();
     try {
-      await chatApi.sendVoice(activeDate, blob, mime);
-      await resync();
+      await chatApi.sendVoice(selected, blob, mime);
+      resync();
     } catch (e) {
       await handleFailure(e);
     } finally {
@@ -129,18 +155,10 @@ export default function ChatApp() {
   return (
     <AppShell
       header={<TopBar gear />}
-      subheader={
-        activeDay && <DateStrip days={days} selected={activeDay.date} onSelect={setSelected} />
-      }
-      footer={<Composer onSend={send} onVoice={sendVoice} disabled={typing || !activeDay} />}
+      subheader={<ChatHeader day={activeDay} macros={macros} onSelect={setSelected} />}
+      footer={<Composer onSend={send} onVoice={sendVoice} disabled={typing} />}
     >
-      {activeDay ? (
-        <ChatThread messages={messages} day={activeDay} loading={isLoading} typing={typing} />
-      ) : (
-        <div className="flex h-full items-center justify-center">
-          <div className="cursor-blink font-pixel text-xs tracking-widest text-brown">LOADING</div>
-        </div>
-      )}
+      <ChatThread messages={messages} day={activeDay} loading={isLoading} typing={typing} />
     </AppShell>
   );
 }
