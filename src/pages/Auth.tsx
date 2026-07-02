@@ -55,7 +55,8 @@ export default function Auth() {
           {step === 'email' ? (
             <>
               <p className="font-mono text-xs text-brown">
-                enter the email you signed up with — we'll send a 6-digit code
+                enter the email you <span className="text-ink">signed up to ahara with</span> —
+                we'll send a 6-digit code
               </p>
               <input
                 type="email"
@@ -78,7 +79,8 @@ export default function Auth() {
           ) : (
             <>
               <p className="font-mono text-xs text-brown">
-                sent to <span className="text-ink">{email}</span>
+                if <span className="text-ink">{email}</span> has an ahara account, a code is on
+                its way — check spam too. no code? make sure it's the email you signed up with
               </p>
               <input
                 type="text"
