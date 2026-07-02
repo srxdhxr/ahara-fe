@@ -8,13 +8,15 @@ import apiClient from './client';
 export const TOKEN_KEY = 'access_token';
 
 export interface AuthApi {
-  requestOtp(email: string): Promise<void>;
+  /** Resolves with whether this email has an Ahara account. */
+  requestOtp(email: string): Promise<{ registered: boolean }>;
   verifyOtp(email: string, code: string): Promise<{ access_token: string }>;
 }
 
 export const authApi: AuthApi = {
   async requestOtp(email: string) {
-    await apiClient.post('/api/auth/request-otp', { email });
+    const { data } = await apiClient.post('/api/auth/request-otp', { email });
+    return { registered: (data as { registered?: boolean }).registered !== false };
   },
   async verifyOtp(email: string, code: string) {
     const { data } = await apiClient.post('/api/auth/verify-otp', { email, code });

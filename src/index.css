@@ -14,6 +14,8 @@
     color: #1a1a1a;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
     line-height: 1.55;
+    /* app shell: never rubber-band the page itself (iOS) */
+    overscroll-behavior: none;
   }
 }
 
@@ -58,6 +60,28 @@
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* iPhone geometry: Dynamic Island / home indicator / curved corners */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .px-safe {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* recording mic: chunky 1Hz pulse, steps() to stay pixel-y */
+  .rec-pulse {
+    animation: recpulse 1s steps(2, jump-none) infinite;
+  }
+  @keyframes recpulse {
+    50% {
+      background-color: #5a4a85;
+    }
   }
 }
 

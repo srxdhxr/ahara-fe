@@ -37,7 +37,7 @@ export default function ChatThread({
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <div className="cursor-blink font-pixel text-xs tracking-widest text-brown">LOADING</div>
       </div>
     );
@@ -45,7 +45,7 @@ export default function ChatThread({
 
   if (messages.length === 0 && !typing) {
     return (
-      <div className="flex-1 overflow-y-auto">
+      <div className="h-full">
         <EmptyState kind={day.kind} />
       </div>
     );
@@ -64,8 +64,9 @@ export default function ChatThread({
     prev = msg;
   }
 
+  // NOTE: no overflow here — AppShell's <main> is the one scroller.
   return (
-    <div className="flex-1 space-y-2 overflow-y-auto px-4 py-5">
+    <div className="space-y-2 px-4 py-5">
       {rows}
       {typing && <TypingIndicator />}
       <div ref={bottomRef} />

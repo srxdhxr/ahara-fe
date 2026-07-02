@@ -16,4 +16,10 @@ export interface ChatApi {
   listMessages(date: string): Promise<ChatMessage[]>;
   /** Sends a message and resolves with Maya's reply burst (1–3 messages). */
   sendMessage(date: string, text: string): Promise<ChatMessage[]>;
+  /** Uploads a voice note; resolves with its transcript + Maya's replies. */
+  sendVoice(
+    date: string,
+    blob: Blob,
+    mime: string,
+  ): Promise<{ transcript: ChatMessage; replies: ChatMessage[] }>;
 }

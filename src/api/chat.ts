@@ -26,4 +26,17 @@ export const chatApi: ChatApi = {
     );
     return (data as { replies: ChatMessage[] }).replies;
   },
+
+  async sendVoice(
+    date: string,
+    blob: Blob,
+    mime: string,
+  ): Promise<{ transcript: ChatMessage; replies: ChatMessage[] }> {
+    const form = new FormData();
+    const ext = mime.includes('mp4') ? 'm4a' : 'webm';
+    form.append('audio', blob, `note.${ext}`);
+    form.append('date', date);
+    const { data } = await apiClient.post('/api/chat/voice', form, { timeout: 120000 });
+    return data as { transcript: ChatMessage; replies: ChatMessage[] };
+  },
 };

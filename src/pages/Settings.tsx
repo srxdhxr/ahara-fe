@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, LogOut } from 'lucide-react';
+import { Bell, BellOff, LogOut } from 'lucide-react';
 import { session } from '../api/auth';
+import { pushApi } from '../api/push';
+import AppShell from '../components/AppShell';
+import TopBar from '../components/TopBar';
 import {
   GOAL_LABELS,
   KNOWN_GOALS,
@@ -304,6 +307,62 @@ function PreferencesSection() {
   );
 }
 
+function NotificationsSection() {
+  const [enabled, setEnabled] = useState<boolean | null>(null); // null = unknown/unsupported
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!pushApi.supported()) {
+      setEnabled(null);
+      return;
+    }
+    pushApi.currentSubscription().then((sub) => setEnabled(Boolean(sub)));
+  }, []);
+
+  if (!pushApi.supported()) {
+    return (
+      <Section title="NOTIFICATIONS">
+        <p className="font-mono text-xs text-brown">
+          notifications need the installed app — add maya to your home screen first (share →
+          add to home screen), then come back here
+        </p>
+      </Section>
+    );
+  }
+
+  const toggle = async () => {
+    setBusy(true);
+    try {
+      if (enabled) {
+        await pushApi.disable();
+        setEnabled(false);
+      } else {
+        setEnabled(await pushApi.enable());
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Section title="NOTIFICATIONS">
+      <p className="font-mono text-xs text-brown">
+        maya checks in around dinner if you haven't logged — get that as a notification
+      </p>
+      <button
+        onClick={toggle}
+        disabled={busy || enabled === null}
+        className={`pixel-press flex items-center gap-2 border-[2px] border-ink px-4 py-2 font-pixel text-[10px] tracking-wider shadow-pixel-sm disabled:opacity-50 ${
+          enabled ? 'bg-purple text-cream' : 'bg-cream text-ink'
+        }`}
+      >
+        {enabled ? <Bell size={14} strokeWidth={2.5} /> : <BellOff size={14} strokeWidth={2.5} />}
+        {busy ? 'WORKING…' : enabled ? 'ON — TAP TO TURN OFF' : 'TURN ON'}
+      </button>
+    </Section>
+  );
+}
+
 // --- page ---------------------------------------------------------------------
 
 export default function Settings() {
@@ -315,32 +374,20 @@ export default function Settings() {
   };
 
   return (
-    <div className="dot-grid-faint min-h-dvh">
-      <div className="mx-auto flex min-h-dvh w-full flex-col bg-cream sm:my-8 sm:min-h-0 sm:max-w-md sm:border-[3px] sm:border-ink sm:shadow-pixel">
-        <div className="flex items-center gap-3 border-b-[3px] border-ink bg-lavender px-4 py-2">
-          <button
-            aria-label="Back to chat"
-            onClick={() => navigate('/')}
-            className="pixel-press border-[2px] border-ink bg-cream p-1 text-ink shadow-pixel-sm"
-          >
-            <ArrowLeft size={14} strokeWidth={2.5} />
-          </button>
-          <span className="font-pixel text-[10px] tracking-widest">SETTINGS</span>
-        </div>
+    <AppShell header={<TopBar title="SETTINGS" back />}>
+      <div className="space-y-4 px-4 py-5">
+        <ProfileAndHealth />
+        <PreferencesSection />
+        <NotificationsSection />
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
-          <ProfileAndHealth />
-          <PreferencesSection />
-
-          <button
-            onClick={logout}
-            className="pixel-press flex w-full items-center justify-center gap-2 border-[3px] border-ink bg-cream px-4 py-3 font-pixel text-xs tracking-wider text-ink shadow-pixel hover:text-purple-deep"
-          >
-            <LogOut size={14} strokeWidth={2.5} />
-            LOG OUT
-          </button>
-        </div>
+        <button
+          onClick={logout}
+          className="pixel-press flex w-full items-center justify-center gap-2 border-[3px] border-ink bg-cream px-4 py-3 font-pixel text-xs tracking-wider text-ink shadow-pixel hover:text-purple-deep"
+        >
+          <LogOut size={14} strokeWidth={2.5} />
+          LOG OUT
+        </button>
       </div>
-    </div>
+    </AppShell>
   );
 }

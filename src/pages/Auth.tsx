@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi, session } from '../api/auth';
 
-type Step = 'email' | 'code';
+type Step = 'email' | 'code' | 'apply';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -16,8 +16,8 @@ export default function Auth() {
     setBusy(true);
     setError(null);
     try {
-      await authApi.requestOtp(email.trim().toLowerCase());
-      setStep('code');
+      const { registered } = await authApi.requestOtp(email.trim().toLowerCase());
+      setStep(registered ? 'code' : 'apply');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'something went wrong');
     } finally {
@@ -49,10 +49,32 @@ export default function Auth() {
 
         <div className="space-y-4 px-5 py-6">
           <h1 className="font-pixel text-sm tracking-wider">
-            {step === 'email' ? 'SIGN IN' : 'CHECK YOUR EMAIL'}
+            {step === 'email' ? 'SIGN IN' : step === 'code' ? 'CHECK YOUR EMAIL' : 'NOT YET'}
           </h1>
 
-          {step === 'email' ? (
+          {step === 'apply' ? (
+            <>
+              <p className="font-mono text-xs text-brown">
+                <span className="text-ink">{email}</span> doesn't have an ahara account yet —
+                maya's invite-only right now
+              </p>
+              <a
+                href="https://www.withahara.com/start"
+                className="pixel-press block w-full border-[3px] border-ink bg-purple px-4 py-3 text-center font-pixel text-xs tracking-wider text-cream shadow-pixel"
+              >
+                ▶ APPLY AT WITHAHARA.COM
+              </a>
+              <button
+                onClick={() => {
+                  setStep('email');
+                  setError(null);
+                }}
+                className="w-full text-center font-mono text-xs text-brown underline hover:text-purple-deep"
+              >
+                use a different email
+              </button>
+            </>
+          ) : step === 'email' ? (
             <>
               <p className="font-mono text-xs text-brown">
                 enter the email you <span className="text-ink">signed up to ahara with</span> —
@@ -79,8 +101,8 @@ export default function Auth() {
           ) : (
             <>
               <p className="font-mono text-xs text-brown">
-                if <span className="text-ink">{email}</span> has an ahara account, a code is on
-                its way — check spam too. no code? make sure it's the email you signed up with
+                code sent to <span className="text-ink">{email}</span> — check spam if it's not
+                there in a minute
               </p>
               <input
                 type="text"
