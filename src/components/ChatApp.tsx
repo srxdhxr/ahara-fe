@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { chatApi } from '../api/chat';
+import { userApi } from '../api/user';
 import type { ChatMessage, DaySummary } from '../api/types';
 import DateStrip from './DateStrip';
 import ChatThread from './ChatThread';
@@ -21,6 +22,22 @@ export default function ChatApp() {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
   const [typing, setTyping] = useState(false);
+
+  // Keep the server's notion of the user's timezone honest — signups default
+  // to America/Los_Angeles, which makes Maya talk about dinner at 3am for
+  // east-coast users. The browser knows the truth; sync it once per load.
+  useEffect(() => {
+    const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (!browserTz) return;
+    userApi
+      .getMe()
+      .then((me) => {
+        if (me.timezone !== browserTz) return userApi.updateMe({ timezone: browserTz });
+      })
+      .catch(() => {
+        // non-fatal — worst case the server keeps its stored timezone
+      });
+  }, []);
 
   const { data: days = [] } = useQuery({
     queryKey: ['days'],
@@ -60,14 +77,26 @@ export default function ChatApp() {
       ]);
       // Re-sync with the server (ids for the optimistic message, ordering)
       await queryClient.invalidateQueries({ queryKey: ['messages', activeDate] });
+    } catch (e) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        // duplicate send — the first copy is still processing; poll for it
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['messages', activeDate] });
+        }, 8000);
+      } else {
+        await queryClient.invalidateQueries({ queryKey: ['messages', activeDate] });
+      }
     } finally {
       setTyping(false);
     }
   };
 
   return (
-    <div className="dot-grid-faint flex min-h-dvh items-stretch justify-center sm:items-center sm:py-8">
-      <div className="flex w-full flex-col border-ink bg-cream sm:max-w-md sm:border-[3px] sm:shadow-pixel">
+    // h-dvh (not min-h): the panel is a fixed viewport-height app shell —
+    // the THREAD scrolls internally, the page itself never grows.
+    <div className="dot-grid-faint flex h-dvh items-stretch justify-center sm:items-center sm:py-8">
+      <div className="flex h-full w-full flex-col overflow-hidden border-ink bg-cream sm:h-[min(85dvh,800px)] sm:max-w-md sm:border-[3px] sm:shadow-pixel">
         {/* Top bar */}
         <div className="flex items-center justify-between border-b-[3px] border-ink bg-lavender px-4 py-2">
           <span className="font-pixel text-[10px] tracking-widest">MAYA · AHARA</span>
