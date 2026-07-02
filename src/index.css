@@ -2,60 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #F5F1ED 0%, #EBE5DE 100%);
-  min-height: 100vh;
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    background: #fafaf9;
+    color: #1a1a1a;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.55;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@layer utilities {
+  /* Faint 16px dot grid — subtle pixel paper */
+  .dot-grid-faint {
+    background-image: radial-gradient(rgba(26, 26, 26, 0.18) 1px, transparent 1px);
+    background-size: 16px 16px;
+    background-color: #fafaf9;
+  }
+
+  /* Chunky pixel button press: shadow shrinks + element nudges */
+  .pixel-press {
+    transition: transform 80ms steps(2), box-shadow 80ms steps(2);
+  }
+  .pixel-press:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 6px 6px 0 #1a1a1a;
+  }
+  .pixel-press:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #1a1a1a;
+  }
+
+  /* Blinking square cursor — 1Hz, no easing */
+  .cursor-blink::after {
+    content: "_";
+    display: inline-block;
+    margin-left: 2px;
+    animation: blink 1s steps(2, jump-none) infinite;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* Hide scrollbar on the date strip but keep it scrollable */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-/* Custom slider styles */
-input[type="range"].slider {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 8px;
-  border-radius: 4px;
-  outline: none;
-}
-
-input[type="range"].slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6B5B95 0%, #8B7BA8 100%);
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  transition: all 0.2s ease;
-}
-
-input[type="range"].slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-}
-
-input[type="range"].slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6B5B95 0%, #8B7BA8 100%);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  transition: all 0.2s ease;
-}
-
-input[type="range"].slider::-moz-range-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+@media (prefers-reduced-motion: reduce) {
+  .cursor-blink::after {
+    animation: none;
+  }
+  .pixel-press {
+    transition: none;
+  }
 }

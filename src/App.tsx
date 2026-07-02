@@ -1,14 +1,10 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Layout from './components/Layout';
+import ChatApp from './components/ChatApp';
 import Auth from './pages/Auth';
-import OTPVerification from './pages/OTPVerification';
-import FoodLogs from './pages/FoodLogs';
-import LogMeal from './pages/LogMeal';
-import Insights from './pages/Insights';
-import Profile from './pages/Profile';
-import Chat from './pages/Chat';
+import Settings from './pages/Settings';
+import InstallPrompt from './components/InstallPrompt';
+import { session } from './api/auth';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,25 +15,12 @@ const queryClient = new QueryClient({
   },
 });
 
-// Root Redirect Component - handles initial landing
-function RootRedirect() {
-  const hasToken = localStorage.getItem('access_token');
-
-  if (hasToken) {
-    return <Navigate to="/log-meal" replace />;
-  }
-
-  return <Navigate to="/auth" replace />;
-}
-
-// Protected Route Component
+// Token-gated routes. The axios middleware (src/api/client.ts) clears the
+// token and redirects to /auth on any 401/403, so a dead session can't linger.
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const hasToken = localStorage.getItem('access_token');
-
-  if (!hasToken) {
+  if (!session.isAuthed()) {
     return <Navigate to="/auth" replace />;
   }
-
   return <>{children}</>;
 }
 
@@ -46,72 +29,29 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          {/* Public Routes */}
           <Route path="/auth" element={<Auth />} />
-          <Route path="/verify-otp" element={<OTPVerification />} />
-          
-          {/* Root Route - redirects based on auth status */}
-          <Route path="/" element={<RootRedirect />} />
-          
           <Route
-            path="/chat"
+            path="/"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Chat />
-                </Layout>
+                <ChatApp />
               </ProtectedRoute>
             }
           />
-          
           <Route
-            path="/food-logs"
+            path="/settings"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <FoodLogs />
-                </Layout>
+                <Settings />
               </ProtectedRoute>
             }
           />
-          
-          <Route
-            path="/log-meal"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <LogMeal />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/insights"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Insights />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Profile />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <InstallPrompt />
       </Router>
     </QueryClientProvider>
   );
 }
 
 export default App;
-

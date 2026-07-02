@@ -1,12 +1,15 @@
-
 import axios from 'axios';
 
+// Axios instance + auth middleware, kept from v1. The endpoint helpers that
+// targeted the old backend are gone — new endpoints for ahara-engine go in
+// src/api/chat.ts behind the ChatApi interface.
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:80',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: 30000,
 });
 
 // Add auth token to requests
@@ -22,112 +25,19 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Global error handler - handle 401/403 responses
+// Global error handler — expired/invalid token clears session and returns to /auth
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 (Unauthorized) or 403 (Forbidden) - token expired or invalid
     if (error.response?.status === 401 || error.response?.status === 403) {
-      // Clear invalid token
       localStorage.removeItem('access_token');
-      
-      // Only redirect if not already on auth page
       if (window.location.pathname !== '/auth' && window.location.pathname !== '/verify-otp') {
-        // Clear any session data
         sessionStorage.clear();
-        // Redirect to login
         window.location.href = '/auth';
       }
     }
     return Promise.reject(error);
   }
 );
-
-export const api = {
-  // Auth
-  register: async (data: { email: string; password: string; name: string }) => {
-    const response = await apiClient.post('/register', {
-      email: data.email,
-      password: data.password,
-      name: data.name,
-    });
-    return response;
-  },
-
-  login: async (data: { email: string; password: string }) => {
-    const response = await apiClient.post('/login', {
-      email: data.email,
-      password: data.password,
-    });
-    localStorage.setItem('access_token', response.data.access_token);
-    return response;
-  },
-
-  logout: () => {
-    localStorage.removeItem('access_token');
-  },
-
-  getMe: () =>
-    apiClient.get('/me'),
-
-  // User Details
-  addUserDetails: (data: { height_cm: number; weight_kg: number; sex: string; age: number; bmi: number; mtnc_cal: number }) =>
-    apiClient.post('/user_details', data),
-
-  getUserDetails: () =>
-    apiClient.get('/user_details'),
-
-  updateUserDetails: (data: any) =>
-    apiClient.put('/user_details', data),
-
-  // Food Logs
-  getFoodLogs: (date?: string) => {
-    const timezoneOffset = new Date().getTimezoneOffset();
-    return apiClient.get('/food_logs', { 
-      params: date ? { date, timezone_offset: timezoneOffset } : {} 
-    });
-  },
-  
-  deleteFoodLog: (sessionId: number) =>
-    apiClient.delete(`/food_logs/${sessionId}`),
-
-  // Insights
-  getWeeklyStats: () =>
-    apiClient.get('/weekly_stats'),
-
-  getCalorieGraph: (days: number = 7) =>
-    apiClient.get('/calorie_graph', { params: { days } }),
-
-  // Meal Tracking
-  transcribeAudio: (formData: FormData) =>
-    apiClient.post('/transcribe_audio', formData),
-
-  processMeal: (data: { transcript: string; meal_type: string; start_time: string; end_time: string }) =>
-    apiClient.post('/process_meal', data),
-
-  // OTP
-  sendOTP: (email: string) =>
-    apiClient.post('/send_otp', { email }),
-  
-  verifyOTP: (email: string, otp: string) =>
-    apiClient.post('/verify_otp', { email, otp }),
-
-  // Chat
-  sendChatMessage: (message: string, nutritionContext?: any) => {
-    const timezoneOffset = new Date().getTimezoneOffset();
-    const payload: any = { message };
-    if (nutritionContext) {
-      payload.nutrition_context = nutritionContext;
-    }
-    return apiClient.post('/chat', payload, { params: { timezone_offset: timezoneOffset } });
-  },
-
-  // Google Auth
-  googleAuth: async (idToken: string) => {
-    const response = await apiClient.post('/auth/google', { id_token: idToken });
-    localStorage.setItem('access_token', response.data.access_token);
-    return response;
-  },
-};
 
 export default apiClient;
