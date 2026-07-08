@@ -3,6 +3,7 @@ import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { chatApi } from '../api/chat';
 import { userApi } from '../api/user';
+import SubscriptionBanner from './SubscriptionBanner';
 import type { ChatMessage, DaySummary } from '../api/types';
 import AppShell from './AppShell';
 import TopBar from './TopBar';
@@ -27,24 +28,24 @@ export default function ChatApp() {
   const [typing, setTyping] = useState(false);
   const todayRef = useRef(localToday());
 
+  const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => userApi.getMe() });
+
   // Keep the server's notion of the user's timezone honest (it scopes the
   // message-day windows and macro sums); refresh queries once it settles.
   useEffect(() => {
     const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (!browserTz) return;
+    if (!browserTz || !me || me.timezone === browserTz) return;
     userApi
-      .getMe()
-      .then((me) => {
-        if (me.timezone === browserTz) return;
-        return userApi.updateMe({ timezone: browserTz }).then(() => {
-          queryClient.invalidateQueries({ queryKey: ['messages'] });
-          queryClient.invalidateQueries({ queryKey: ['macros'] });
-        });
+      .updateMe({ timezone: browserTz })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['messages'] });
+        queryClient.invalidateQueries({ queryKey: ['macros'] });
+        queryClient.invalidateQueries({ queryKey: ['me'] });
       })
       .catch(() => {
         // non-fatal — worst case the server keeps its stored timezone
       });
-  }, [queryClient]);
+  }, [me, queryClient]);
 
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
@@ -155,7 +156,12 @@ export default function ChatApp() {
   return (
     <AppShell
       header={<TopBar gear />}
-      subheader={<ChatHeader day={activeDay} macros={macros} onSelect={setSelected} />}
+      subheader={
+        <>
+          <ChatHeader day={activeDay} macros={macros} onSelect={setSelected} />
+          <SubscriptionBanner me={me} />
+        </>
+      }
       footer={<Composer onSend={send} onVoice={sendVoice} disabled={typing} />}
     >
       <ChatThread messages={messages} day={activeDay} loading={isLoading} typing={typing} />

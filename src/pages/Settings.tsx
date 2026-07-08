@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, LogOut } from 'lucide-react';
 import { session } from '../api/auth';
+import { billingApi } from '../api/user';
 import { pushApi } from '../api/push';
 import AppShell from '../components/AppShell';
 import TopBar from '../components/TopBar';
@@ -363,6 +364,56 @@ function NotificationsSection() {
   );
 }
 
+function SubscriptionSection() {
+  const [me, setMe] = useState<{ status: string; trial_ends_at: string | null } | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    import('../api/user').then(({ userApi }) => userApi.getMe().then(setMe));
+  }, []);
+  if (!me) return null;
+
+  const active = me.status === 'paid' || me.status === 'trial';
+  const trialEnd =
+    me.status === 'trial' && me.trial_ends_at
+      ? new Date(me.trial_ends_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      : null;
+
+  const open = (fn: () => Promise<string>) => async () => {
+    setBusy(true);
+    try {
+      window.location.assign(await fn());
+    } catch {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Section title="SUBSCRIPTION">
+      <p className="font-mono text-xs text-brown">
+        status: <span className="text-ink">{me.status}</span>
+        {trialEnd && <> · first charge {trialEnd}</>}
+      </p>
+      {active ? (
+        <button
+          onClick={open(billingApi.portal)}
+          disabled={busy}
+          className="pixel-press border-[2px] border-ink bg-cream px-4 py-2 font-pixel text-[10px] tracking-wider text-ink shadow-pixel-sm disabled:opacity-50"
+        >
+          {busy ? 'OPENING…' : 'MANAGE BILLING'}
+        </button>
+      ) : (
+        <button
+          onClick={open(billingApi.checkout)}
+          disabled={busy}
+          className="pixel-press border-[2px] border-ink bg-purple px-4 py-2 font-pixel text-[10px] tracking-wider text-cream shadow-pixel-sm disabled:opacity-50"
+        >
+          {busy ? 'OPENING…' : '▶ SUBSCRIBE · $13.99/MO'}
+        </button>
+      )}
+    </Section>
+  );
+}
+
 // --- page ---------------------------------------------------------------------
 
 export default function Settings() {
@@ -377,6 +428,7 @@ export default function Settings() {
     <AppShell header={<TopBar title="SETTINGS" back />}>
       <div className="space-y-4 px-4 py-5">
         <ProfileAndHealth />
+        <SubscriptionSection />
         <PreferencesSection />
         <NotificationsSection />
 

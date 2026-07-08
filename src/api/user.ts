@@ -28,6 +28,8 @@ export type Me = {
   first_name: string;
   email: string; // read-only
   phone_number: string; // read-only
+  status: 'free' | 'trial' | 'paid' | 'cancelled';
+  trial_ends_at: string | null; // ISO, set for signup trials
   timezone: string;
   sex: 'M' | 'F' | '';
   age: number | null;
@@ -64,5 +66,19 @@ export const userApi = {
   async updatePreferences(prefs: Preferences): Promise<Preferences> {
     const { data } = await apiClient.put('/api/me/preferences', prefs);
     return data as Preferences;
+  },
+};
+
+
+export const billingApi = {
+  /** Stripe Billing Portal — manage card, cancel, invoices. */
+  async portal(): Promise<string> {
+    const { data } = await apiClient.post('/api/billing/portal');
+    return (data as { url: string }).url;
+  },
+  /** Re-subscribe checkout (pay today — trials are signup-only). */
+  async checkout(): Promise<string> {
+    const { data } = await apiClient.post('/api/billing/checkout');
+    return (data as { url: string }).url;
   },
 };
