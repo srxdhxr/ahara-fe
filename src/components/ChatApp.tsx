@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { chatApi } from '../api/chat';
+import { chatApi, sendMessageStreaming } from '../api/chat';
 import { userApi } from '../api/user';
 import SubscriptionBanner from './SubscriptionBanner';
 import type { ChatMessage, DaySummary } from '../api/types';
@@ -124,14 +124,15 @@ export default function ChatApp() {
   const send = async (text: string) => {
     appendLocal([{ id: -Date.now(), from: 'you', text, at: new Date().toISOString() }]);
     setTyping(true);
-    startPolling();
     try {
-      await chatApi.sendMessage(selected, text);
+      // SSE: each reply message renders the instant Maya writes it
+      await sendMessageStreaming(selected, text, (reply) =>
+        appendLocal([{ id: -Date.now(), from: 'maya', text: reply, at: new Date().toISOString() }]),
+      );
       resync();
     } catch (e) {
       await handleFailure(e);
     } finally {
-      stopPolling();
       setTyping(false);
     }
   };

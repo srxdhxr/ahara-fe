@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { TOKEN_KEY } from './auth';
 import type { ChatApi, ChatMessage, DayMacros, DaySummary } from './types';
 
 // ---------------------------------------------------------------------------
@@ -45,3 +46,51 @@ export const chatApi: ChatApi = {
     return data as { transcript: ChatMessage; replies: ChatMessage[] };
   },
 };
+
+/**
+ * Streaming send: resolves with all replies, invoking onReply the moment
+ * each message lands (SSE). Falls back to the buffered endpoint if the
+ * stream can't be established.
+ */
+export async function sendMessageStreaming(
+  date: string,
+  text: string,
+  onReply: (text: string) => void,
+): Promise<ChatMessage[]> {
+  const base = (apiClient.defaults.baseURL || '').replace(/\/$/, '');
+  const res = await fetch(`${base}/api/chat/message/stream`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${localStorage.getItem(TOKEN_KEY) ?? ''}`,
+    },
+    body: JSON.stringify({ text, date }),
+  });
+  if (!res.ok || !res.body) {
+    if (res.status === 409) throw Object.assign(new Error('dup'), { response: { status: 409 } });
+    return chatApi.sendMessage(date, text); // old endpoint fallback
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let done: ChatMessage[] | null = null;
+  for (;;) {
+    const { value, done: eof } = await reader.read();
+    if (eof) break;
+    buf += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+      const frame = buf.slice(0, idx);
+      buf = buf.slice(idx + 2);
+      if (!frame.startsWith('data: ')) continue; // keepalive comment
+      const ev = JSON.parse(frame.slice(6));
+      if (ev.type === 'reply') onReply(ev.text);
+      else if (ev.type === 'done') done = ev.replies as ChatMessage[];
+      else if (ev.type === 'error') throw new Error('stream error');
+    }
+    if (done) break;
+  }
+  if (done === null) throw new Error('stream ended early');
+  return done;
+}
