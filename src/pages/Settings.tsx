@@ -366,17 +366,22 @@ function NotificationsSection() {
 
 function SubscriptionSection() {
   const [me, setMe] = useState<{ status: string; trial_ends_at: string | null } | null>(null);
+  const [sub, setSub] = useState<import('../api/user').SubscriptionState>(null);
   const [busy, setBusy] = useState(false);
+  const [toggling, setToggling] = useState(false);
   useEffect(() => {
-    import('../api/user').then(({ userApi }) => userApi.getMe().then(setMe));
+    import('../api/user').then(({ userApi, billingApi }) => {
+      userApi.getMe().then(setMe);
+      billingApi.subscription().then(setSub).catch(() => setSub(null));
+    });
   }, []);
   if (!me) return null;
 
   const active = me.status === 'paid' || me.status === 'trial';
-  const trialEnd =
-    me.status === 'trial' && me.trial_ends_at
-      ? new Date(me.trial_ends_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-      : null;
+  const trialing = sub?.status === 'trialing';
+  const periodEnd = sub?.period_end
+    ? new Date(sub.period_end * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : null;
 
   const open = (fn: () => Promise<string>) => async () => {
     setBusy(true);
@@ -387,12 +392,50 @@ function SubscriptionSection() {
     }
   };
 
+  const toggleRenew = async () => {
+    if (!sub) return;
+    setToggling(true);
+    try {
+      setSub(await billingApi.setAutoRenew(!sub.auto_renew));
+    } finally {
+      setToggling(false);
+    }
+  };
+
   return (
     <Section title="SUBSCRIPTION">
       <p className="font-mono text-xs text-brown">
         status: <span className="text-ink">{me.status}</span>
-        {trialEnd && <> · first charge {trialEnd}</>}
+        {sub && periodEnd && (
+          <>
+            {' · '}
+            {trialing
+              ? sub.auto_renew
+                ? `first charge ${periodEnd}`
+                : `trial ends ${periodEnd} — card won't be charged`
+              : sub.auto_renew
+                ? `renews ${periodEnd}`
+                : `ends ${periodEnd} — won't renew`}
+          </>
+        )}
       </p>
+      {sub && (
+        <div className="flex items-center justify-between border-[2px] border-ink bg-cream px-3 py-2">
+          <span className="font-pixel text-[9px] tracking-wider text-ink">
+            {trialing ? 'AUTO-CHARGE AFTER TRIAL' : 'AUTO-RENEW'}
+          </span>
+          <button
+            onClick={toggleRenew}
+            disabled={toggling}
+            aria-pressed={sub.auto_renew}
+            className={`pixel-press border-[2px] border-ink px-3 py-1 font-pixel text-[9px] tracking-wider shadow-pixel-sm disabled:opacity-50 ${
+              sub.auto_renew ? 'bg-purple text-cream' : 'bg-cream text-ink'
+            }`}
+          >
+            {toggling ? '…' : sub.auto_renew ? 'ON' : 'OFF'}
+          </button>
+        </div>
+      )}
       {active ? (
         <button
           onClick={open(billingApi.portal)}

@@ -70,7 +70,21 @@ export const userApi = {
 };
 
 
+export type SubscriptionState = {
+  status: string; // trialing | active | past_due ...
+  auto_renew: boolean;
+  period_end: number | null; // unix seconds; trial end while trialing
+} | null;
+
 export const billingApi = {
+  async subscription(): Promise<SubscriptionState> {
+    const { data } = await apiClient.get('/api/billing/subscription');
+    return (data as { subscription: SubscriptionState }).subscription;
+  },
+  async setAutoRenew(enabled: boolean): Promise<SubscriptionState> {
+    const { data } = await apiClient.post('/api/billing/auto-renew', { enabled });
+    return (data as { subscription: SubscriptionState }).subscription;
+  },
   /** Stripe Billing Portal — manage card, cancel, invoices. */
   async portal(): Promise<string> {
     const { data } = await apiClient.post('/api/billing/portal');
