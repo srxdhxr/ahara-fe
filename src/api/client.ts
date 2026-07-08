@@ -31,7 +31,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('access_token');
-      if (window.location.pathname !== '/auth' && window.location.pathname !== '/verify-otp') {
+      if (!['/auth', '/verify-otp', '/welcome'].includes(window.location.pathname)) {
         sessionStorage.clear();
         window.location.href = '/auth';
       }

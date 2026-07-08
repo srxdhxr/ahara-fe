@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { billingApi, type Me } from '../api/user';
 
@@ -8,15 +9,22 @@ import { billingApi, type Me } from '../api/user';
  *  - paid, or grandfathered trial with no future end date → renders nothing
  */
 export default function SubscriptionBanner({ me }: { me: Me | undefined }) {
+  // busy until the redirect actually happens — double-taps would otherwise
+  // mint extra Stripe portal/checkout sessions
+  const [busy, setBusy] = useState(false);
+
   if (!me) return null;
 
-  const go = (fn: () => Promise<string>) => () =>
+  const go = (fn: () => Promise<string>) => () => {
+    if (busy) return;
+    setBusy(true);
     fn()
       .then((url) => window.location.assign(url))
       .catch(() => {
         // portal/checkout hiccup — send them somewhere useful, never dead-end
         window.location.assign('https://www.withahara.com/start');
       });
+  };
 
   if (me.status === 'trial' && me.trial_ends_at) {
     const daysLeft = differenceInCalendarDays(parseISO(me.trial_ends_at), new Date());
@@ -28,9 +36,10 @@ export default function SubscriptionBanner({ me }: { me: Me | undefined }) {
           </span>
           <button
             onClick={go(billingApi.portal)}
-            className="pixel-press border-[2px] border-ink bg-cream px-2 py-0.5 font-pixel text-[9px] tracking-wider text-ink shadow-pixel-sm"
+            disabled={busy}
+            className="pixel-press border-[2px] border-ink bg-cream px-2 py-0.5 font-pixel text-[9px] tracking-wider text-ink shadow-pixel-sm disabled:opacity-50"
           >
-            MANAGE
+            {busy ? 'OPENING…' : 'MANAGE'}
           </button>
         </div>
       );
@@ -45,9 +54,10 @@ export default function SubscriptionBanner({ me }: { me: Me | undefined }) {
         </span>
         <button
           onClick={go(billingApi.checkout)}
-          className="pixel-press border-[2px] border-ink bg-cream px-2 py-0.5 font-pixel text-[9px] tracking-wider text-ink shadow-pixel-sm"
+          disabled={busy}
+          className="pixel-press border-[2px] border-ink bg-cream px-2 py-0.5 font-pixel text-[9px] tracking-wider text-ink shadow-pixel-sm disabled:opacity-50"
         >
-          ▶ SUBSCRIBE · $13.99/MO
+          {busy ? 'OPENING…' : '▶ SUBSCRIBE · $13.99/MO'}
         </button>
       </div>
     );
