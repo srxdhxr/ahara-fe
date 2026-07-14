@@ -5,6 +5,7 @@ import { chatApi, sendMessageStreaming } from '../api/chat';
 import { userApi } from '../api/user';
 import SubscriptionBanner from './SubscriptionBanner';
 import type { ChatMessage, DaySummary } from '../api/types';
+import type { AgentStep } from './MessageBubble';
 import AppShell from './AppShell';
 import TopBar from './TopBar';
 import ChatHeader from './ChatHeader';
@@ -26,6 +27,7 @@ export default function ChatApp() {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string>(localToday);
   const [typing, setTyping] = useState(false);
+  const [steps, setSteps] = useState<AgentStep[]>([]);
   const todayRef = useRef(localToday());
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => userApi.getMe() });
@@ -124,16 +126,31 @@ export default function ChatApp() {
   const send = async (text: string) => {
     appendLocal([{ id: -Date.now(), from: 'you', text, at: new Date().toISOString() }]);
     setTyping(true);
+    setSteps([]);
     try {
-      // SSE: each reply message renders the instant Maya writes it
-      await sendMessageStreaming(selected, text, (reply) =>
-        appendLocal([{ id: -Date.now(), from: 'maya', text: reply, at: new Date().toISOString() }]),
+      // SSE: reply messages render the instant Maya writes them; step events
+      // stream the agent's real progress (replaces the old canned statuses).
+      await sendMessageStreaming(
+        selected,
+        text,
+        (reply) =>
+          appendLocal([
+            { id: -Date.now(), from: 'maya', text: reply, at: new Date().toISOString() },
+          ]),
+        (step) => {
+          setSteps((prev) => [...prev, step]);
+          // authoritative total landed — refresh the header from the DB
+          if (step.kind === 'total') {
+            queryClient.invalidateQueries({ queryKey: ['macros'] });
+          }
+        },
       );
       resync();
     } catch (e) {
       await handleFailure(e);
     } finally {
       setTyping(false);
+      setSteps([]);
     }
   };
 
@@ -165,7 +182,13 @@ export default function ChatApp() {
       }
       footer={<Composer onSend={send} onVoice={sendVoice} disabled={typing} />}
     >
-      <ChatThread messages={messages} day={activeDay} loading={isLoading} typing={typing} />
+      <ChatThread
+        messages={messages}
+        day={activeDay}
+        loading={isLoading}
+        typing={typing}
+        steps={steps}
+      />
     </AppShell>
   );
 }

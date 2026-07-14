@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import type { ChatMessage } from '../api/types';
 
 export default function MessageBubble({
@@ -40,36 +39,31 @@ export function TimeSeparator({ text }: { text: string }) {
   );
 }
 
-// What Maya's "doing" while the agent runs. Ordered like the real pipeline —
-// think → remember → log → cook-brain → math — so long waits read as work,
-// not lag. Cycles forward, then holds on the last one.
-const THINKING_STATUSES = [
-  'thinking',
-  'updating memory',
-  'recording the meal',
-  'tossing',
-  'sautéing',
-  'counting calories',
-  'double-checking the math',
-];
+// Real-time progress: the actual steps the agent streams (SSE `step` events),
+// not canned status text. `logged`/`total` steps are done (✓); everything else
+// is in-flight (⋯). Until the first step arrives we show a lone "thinking".
+export interface AgentStep {
+  kind: string;
+  label: string;
+}
 
-export function TypingIndicator() {
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(
-      () => setStep((s) => Math.min(s + 1, THINKING_STATUSES.length - 1)),
-      2200,
-    );
-    return () => clearInterval(t);
-  }, []);
-
+export function TypingIndicator({ steps }: { steps?: AgentStep[] }) {
+  const shown = steps && steps.length ? steps : [{ kind: 'thinking', label: 'thinking' }];
   return (
     <div className="flex justify-start">
       <div className="max-w-[85%] rounded-[4px] border-[2px] border-ink bg-white px-3 py-2 shadow-pixel-sm">
         <div className="mb-0.5 font-pixel text-[9px] tracking-wider text-brown">MAYA</div>
-        <div className="cursor-blink font-mono text-xs text-brown">
-          {THINKING_STATUSES[step]}
+        <div className="space-y-0.5 font-mono text-xs text-brown">
+          {shown.map((s, i) => {
+            const done = s.kind === 'logged' || s.kind === 'total';
+            const isLast = i === shown.length - 1;
+            return (
+              <div key={i} className={done ? 'text-ink' : ''}>
+                <span className="mr-1 opacity-60">{done ? '✓' : '⋯'}</span>
+                <span className={isLast && !done ? 'cursor-blink' : ''}>{s.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { format, parseISO } from 'date-fns';
 import type { ChatMessage, DaySummary } from '../api/types';
 import MessageBubble, { TimeSeparator, TypingIndicator } from './MessageBubble';
+import type { AgentStep } from './MessageBubble';
 
 function EmptyState({ kind }: { kind: DaySummary['kind'] }) {
   return (
@@ -23,11 +24,13 @@ export default function ChatThread({
   day,
   loading,
   typing,
+  steps,
 }: {
   messages: ChatMessage[];
   day: DaySummary;
   loading: boolean;
   typing: boolean;
+  steps?: AgentStep[];
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -68,7 +71,7 @@ export default function ChatThread({
   return (
     <div className="space-y-2 px-4 py-5">
       {rows}
-      {typing && <TypingIndicator />}
+      {typing && <TypingIndicator steps={steps} />}
       <div ref={bottomRef} />
     </div>
   );

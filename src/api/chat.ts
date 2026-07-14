@@ -52,10 +52,17 @@ export const chatApi: ChatApi = {
  * each message lands (SSE). Falls back to the buffered endpoint if the
  * stream can't be established.
  */
+export interface AgentStep {
+  kind: string;
+  label: string;
+  total?: { calories: number; protein_g: number; carbs_g: number; fat_g: number };
+}
+
 export async function sendMessageStreaming(
   date: string,
   text: string,
   onReply: (text: string) => void,
+  onStep?: (step: AgentStep) => void,
 ): Promise<ChatMessage[]> {
   const base = (apiClient.defaults.baseURL || '').replace(/\/$/, '');
   const res = await fetch(`${base}/api/chat/message/stream`, {
@@ -86,6 +93,7 @@ export async function sendMessageStreaming(
       if (!frame.startsWith('data: ')) continue; // keepalive comment
       const ev = JSON.parse(frame.slice(6));
       if (ev.type === 'reply') onReply(ev.text);
+      else if (ev.type === 'step') onStep?.(ev as AgentStep);
       else if (ev.type === 'done') done = ev.replies as ChatMessage[];
       else if (ev.type === 'error') throw new Error('stream error');
     }
